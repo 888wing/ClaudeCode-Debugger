@@ -1,4 +1,5 @@
 """Pytest configuration and fixtures."""
+
 import os
 import sys
 from pathlib import Path
@@ -53,7 +54,7 @@ def sample_config() -> dict:
         "output": {
             "copy_to_clipboard": True,
             "save_to_file": False,
-        }
+        },
     }
 
 
