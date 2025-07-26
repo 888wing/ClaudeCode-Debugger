@@ -1,0 +1,66 @@
+# ClaudeCode-Debugger Configuration File
+# Copy this to ~/.ccdebug/config.ini and customize
+
+[general]
+# Default theme: default, dark, light, custom
+theme = default
+# Enable verbose output by default
+verbose = false
+# Automatically copy results to clipboard
+auto_copy = false
+# Default output format: text, json, markdown, html, yaml
+default_format = markdown
+# Maximum history entries to keep
+history_limit = 100
+
+[output]
+# Maximum width for text output
+max_width = 120
+# Syntax highlighting theme (pygments themes)
+syntax_theme = monokai
+# Show line numbers in code blocks
+show_line_numbers = false
+# Wrap long lines in code blocks
+wrap_code = true
+
+[clipboard]
+# Default clipboard format: plain, markdown, code, json
+default_format = markdown
+# Include metadata in clipboard
+include_metadata = false
+# Include timestamp in clipboard
+include_timestamp = true
+
+[plugins]
+# Plugins to auto-enable on startup
+auto_enable = ["stack_trace_analyzer", "pattern_matcher"]
+# Plugins to disable
+disabled = []
+
+[agents]
+# Default agent selection: auto, specific-agent-name
+default = auto
+# Prefer specialized agents when available
+prefer_specialized = true
+
+[advanced]
+# Cache TTL in seconds
+cache_ttl = 3600
+# Maximum file size to process (in bytes)
+max_file_size = 1048576
+# Batch processing size
+batch_size = 10
+# Enable parallel processing
+parallel_processing = true
+
+# Custom theme colors (when theme = custom)
+[theme.custom]
+info = bright_cyan
+warning = bright_yellow
+error = bright_red
+success = bright_green
+critical = bright_red on bright_yellow
+heading = bold bright_blue
+subheading = bold cyan
+dim = dim white
+highlight = bold yellow

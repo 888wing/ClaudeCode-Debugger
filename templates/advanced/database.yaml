@@ -1,0 +1,396 @@
+name: Database Error Debug Template
+extends: base
+version: "2.0.0"
+description: Comprehensive database error debugging for SQL and NoSQL
+category: database
+agent: backend-system-architect
+tags: [database, sql, nosql, postgres, mysql, mongodb, redis, query]
+
+variables:
+  sql_errors:
+    "syntax error": "SQL syntax is incorrect"
+    "duplicate key": "Unique constraint violation"
+    "foreign key constraint": "Referenced record doesn't exist"
+    "deadlock detected": "Transaction deadlock occurred"
+    "connection refused": "Database server not accessible"
+    "too many connections": "Connection pool exhausted"
+    "permission denied": "Insufficient privileges"
+    "table does not exist": "Table not found"
+    "column does not exist": "Column not found"
+    
+  db_types:
+    postgres: ["psql", "pg_dump", "EXPLAIN ANALYZE"]
+    mysql: ["mysql", "mysqldump", "EXPLAIN"]
+    mongodb: ["mongo", "mongodump", "explain()"]
+    redis: ["redis-cli", "MONITOR", "INFO"]
+
+template: |
+  {% extends "base" %}
+  
+  {% block header %}
+  {{ super() }}
+  🗄️ Database Error Detected
+  {% if database_type %}
+  Database: {{ database_type|upper }}
+  {% endif %}
+  {% endblock %}
+  
+  {% block error_details %}
+  ## 🔍 Database Error Details
+  
+  {% if error_code %}
+  ### Error Code: `{{ error_code }}`
+  {% endif %}
+  
+  {% if query %}
+  ### Failed Query:
+  ```sql
+  {{ query }}
+  ```
+  {% endif %}
+  
+  {% if connection_info %}
+  ### Connection Info:
+  - **Host**: {{ connection_info.host|default('localhost') }}
+  - **Port**: {{ connection_info.port|default('5432') }}
+  - **Database**: {{ connection_info.database }}
+  - **User**: {{ connection_info.user }}
+  {% endif %}
+  
+  ### Full Error:
+  ```
+  {{ error_text }}
+  ```
+  
+  {% if stack_trace %}
+  ### Stack Trace:
+  ```
+  {{ format_stack_trace(stack_trace, 20) }}
+  ```
+  {% endif %}
+  {% endblock %}
+  
+  {% block analysis_content %}
+  1. **Database Connection Check** 🔌
+     ```bash
+     {% if database_type == 'postgres' %}
+     # Test PostgreSQL connection
+     psql -h {{ connection_info.host|default('localhost') }} -p {{ connection_info.port|default(5432) }} -U {{ connection_info.user|default('postgres') }} -d {{ connection_info.database|default('postgres') }} -c "SELECT version();"
+     
+     # Check active connections
+     psql -c "SELECT count(*) FROM pg_stat_activity;"
+     {% elif database_type == 'mysql' %}
+     # Test MySQL connection
+     mysql -h {{ connection_info.host|default('localhost') }} -P {{ connection_info.port|default(3306) }} -u {{ connection_info.user|default('root') }} -p -e "SELECT VERSION();"
+     
+     # Check connections
+     mysql -e "SHOW PROCESSLIST;"
+     {% elif database_type == 'mongodb' %}
+     # Test MongoDB connection
+     mongosh "mongodb://{{ connection_info.host|default('localhost') }}:{{ connection_info.port|default(27017) }}" --eval "db.version()"
+     
+     # Check connections
+     mongosh --eval "db.serverStatus().connections"
+     {% endif %}
+     ```
+  
+  2. **Query Analysis** 📊
+     {% if query %}
+     {% if database_type in ['postgres', 'mysql'] %}
+     ### Explain Query Plan:
+     ```sql
+     EXPLAIN {% if database_type == 'postgres' %}ANALYZE{% endif %} {{ query }};
+     ```
+     
+     ### Check Indexes:
+     ```sql
+     -- Show table indexes
+     {% if database_type == 'postgres' %}
+     SELECT * FROM pg_indexes WHERE tablename = 'your_table';
+     {% else %}
+     SHOW INDEX FROM your_table;
+     {% endif %}
+     ```
+     {% elif database_type == 'mongodb' %}
+     ### Explain Query:
+     ```javascript
+     db.collection.find({ your_query }).explain("executionStats");
+     
+     // Check indexes
+     db.collection.getIndexes();
+     ```
+     {% endif %}
+     {% endif %}
+  
+  3. **Performance Analysis** ⚡
+     {% if database_type == 'postgres' %}
+     ```sql
+     -- Check slow queries
+     SELECT query, calls, mean_exec_time, max_exec_time 
+     FROM pg_stat_statements 
+     ORDER BY mean_exec_time DESC 
+     LIMIT 10;
+     
+     -- Check table statistics
+     SELECT schemaname, tablename, n_live_tup, n_dead_tup, last_vacuum, last_autovacuum 
+     FROM pg_stat_user_tables;
+     
+     -- Check locks
+     SELECT * FROM pg_locks WHERE NOT granted;
+     ```
+     {% elif database_type == 'mysql' %}
+     ```sql
+     -- Check slow queries
+     SELECT * FROM mysql.slow_log ORDER BY query_time DESC LIMIT 10;
+     
+     -- Check table status
+     SHOW TABLE STATUS;
+     
+     -- Check locks
+     SHOW ENGINE INNODB STATUS;
+     ```
+     {% endif %}
+  
+  4. **Error-Specific Analysis** 🔍
+     {% if 'deadlock' in error_text.lower() %}
+     ### Deadlock Analysis:
+     - Review transaction isolation levels
+     - Check for long-running transactions
+     - Analyze lock acquisition order
+     - Consider query optimization
+     {% elif 'connection' in error_text.lower() %}
+     ### Connection Analysis:
+     - Check connection pool settings
+     - Monitor active connections
+     - Review connection timeouts
+     - Check for connection leaks
+     {% elif 'constraint' in error_text.lower() %}
+     ### Constraint Analysis:
+     - Identify violated constraint
+     - Check data integrity
+     - Review constraint definitions
+     - Validate input data
+     {% endif %}
+  {% endblock %}
+  
+  {% block fix_content %}
+  ## 🔧 Database Error Fixes:
+  
+  {% if 'syntax error' in error_text.lower() %}
+  ### Fixing SQL Syntax Errors:
+  ```sql
+  -- Common syntax fixes
+  
+  -- Missing quotes for strings
+  SELECT * FROM users WHERE name = 'John';  -- Correct
+  SELECT * FROM users WHERE name = John;    -- Wrong
+  
+  -- Proper JOIN syntax
+  SELECT * FROM users u 
+  JOIN orders o ON u.id = o.user_id;       -- Correct
+  
+  -- Proper GROUP BY
+  SELECT user_id, COUNT(*) 
+  FROM orders 
+  GROUP BY user_id;                        -- All non-aggregate columns must be in GROUP BY
+  ```
+  {% endif %}
+  
+  {% if 'duplicate key' in error_text.lower() %}
+  ### Handling Duplicate Key Errors:
+  ```sql
+  -- PostgreSQL: ON CONFLICT
+  INSERT INTO users (email, name) 
+  VALUES ('user@example.com', 'John')
+  ON CONFLICT (email) 
+  DO UPDATE SET name = EXCLUDED.name;
+  
+  -- MySQL: ON DUPLICATE KEY UPDATE
+  INSERT INTO users (email, name) 
+  VALUES ('user@example.com', 'John')
+  ON DUPLICATE KEY UPDATE name = VALUES(name);
+  
+  -- Check for existing records first
+  INSERT INTO users (email, name)
+  SELECT 'user@example.com', 'John'
+  WHERE NOT EXISTS (
+    SELECT 1 FROM users WHERE email = 'user@example.com'
+  );
+  ```
+  {% endif %}
+  
+  {% if 'deadlock' in error_text.lower() %}
+  ### Resolving Deadlocks:
+  ```python
+  # Implement retry logic
+  import time
+  from functools import wraps
+  
+  def retry_on_deadlock(max_retries=3, delay=0.1):
+      def decorator(func):
+          @wraps(func)
+          def wrapper(*args, **kwargs):
+              for attempt in range(max_retries):
+                  try:
+                      return func(*args, **kwargs)
+                  except DatabaseError as e:
+                      if 'deadlock' in str(e).lower() and attempt < max_retries - 1:
+                          time.sleep(delay * (2 ** attempt))  # Exponential backoff
+                          continue
+                      raise
+              return None
+          return wrapper
+      return decorator
+  
+  @retry_on_deadlock()
+  def update_records(conn):
+      with conn.transaction():
+          # Always acquire locks in the same order
+          conn.execute("SELECT * FROM table1 WHERE id = %s FOR UPDATE", [id1])
+          conn.execute("SELECT * FROM table2 WHERE id = %s FOR UPDATE", [id2])
+          # Perform updates
+  ```
+  {% endif %}
+  
+  {% if 'connection' in error_text.lower() %}
+  ### Fixing Connection Issues:
+  ```javascript
+  // Node.js connection pool example
+  const { Pool } = require('pg');
+  
+  const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    max: 20,                    // Maximum pool size
+    idleTimeoutMillis: 30000,   // Close idle clients after 30s
+    connectionTimeoutMillis: 2000, // Return error after 2s if cannot connect
+  });
+  
+  // Always release connections
+  async function query(text, params) {
+    const client = await pool.connect();
+    try {
+      return await client.query(text, params);
+    } finally {
+      client.release();
+    }
+  }
+  
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    await pool.end();
+  });
+  ```
+  {% endif %}
+  
+  ### Query Optimization Tips:
+  ```sql
+  -- Add appropriate indexes
+  CREATE INDEX idx_users_email ON users(email);
+  CREATE INDEX idx_orders_user_id_created ON orders(user_id, created_at);
+  
+  -- Use EXPLAIN to analyze queries
+  EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM large_table WHERE condition;
+  
+  -- Avoid SELECT *
+  SELECT id, name, email FROM users;  -- Better than SELECT *
+  
+  -- Use proper JOINs instead of subqueries
+  -- Better:
+  SELECT u.*, o.total 
+  FROM users u 
+  JOIN orders o ON u.id = o.user_id;
+  
+  -- Worse:
+  SELECT *, (SELECT total FROM orders WHERE user_id = u.id) as total 
+  FROM users u;
+  ```
+  {% endblock %}
+  
+  {% block prevention_content %}
+  - **Connection Pool Management** 🏊
+    ```yaml
+    # Example configuration
+    database:
+      pool:
+        min: 5
+        max: 20
+        acquire_timeout: 30000
+        idle_timeout: 10000
+        reap_frequency: 1000
+        retry_attempts: 3
+    ```
+  
+  - **Query Monitoring** 📊
+    ```sql
+    -- Enable query logging
+    {% if database_type == 'postgres' %}
+    ALTER SYSTEM SET log_statement = 'all';
+    ALTER SYSTEM SET log_duration = on;
+    ALTER SYSTEM SET log_min_duration_statement = 1000;  -- Log queries > 1s
+    {% elif database_type == 'mysql' %}
+    SET GLOBAL slow_query_log = 'ON';
+    SET GLOBAL long_query_time = 1;
+    {% endif %}
+    ```
+  
+  - **Regular Maintenance** 🔧
+    ```sql
+    -- PostgreSQL
+    VACUUM ANALYZE;  -- Update statistics and clean up
+    REINDEX DATABASE mydb;  -- Rebuild indexes
+    
+    -- MySQL
+    ANALYZE TABLE mytable;
+    OPTIMIZE TABLE mytable;
+    ```
+  
+  - **Implement Circuit Breaker** 🔌
+    ```python
+    class DatabaseCircuitBreaker:
+        def __init__(self, failure_threshold=5, recovery_timeout=60):
+            self.failure_threshold = failure_threshold
+            self.recovery_timeout = recovery_timeout
+            self.failure_count = 0
+            self.last_failure_time = None
+            self.state = 'CLOSED'  # CLOSED, OPEN, HALF_OPEN
+            
+        def call(self, func, *args, **kwargs):
+            if self.state == 'OPEN':
+                if time.time() - self.last_failure_time > self.recovery_timeout:
+                    self.state = 'HALF_OPEN'
+                else:
+                    raise Exception("Circuit breaker is OPEN")
+                    
+            try:
+                result = func(*args, **kwargs)
+                if self.state == 'HALF_OPEN':
+                    self.state = 'CLOSED'
+                    self.failure_count = 0
+                return result
+            except Exception as e:
+                self.failure_count += 1
+                self.last_failure_time = time.time()
+                
+                if self.failure_count >= self.failure_threshold:
+                    self.state = 'OPEN'
+                    
+                raise e
+    ```
+  {% endblock %}
+  
+  {% block tips_content %}
+  - 💡 Always use parameterized queries to prevent SQL injection
+  - 💡 Monitor slow query logs regularly
+  - 💡 Keep database statistics up to date
+  - 💡 Use connection pooling in production
+  - 💡 Implement proper indexing strategy
+  - 💡 Regular backup and test restore procedures
+  - 💡 Monitor disk space and memory usage
+  - 💡 Use read replicas for scaling reads
+  - 💡 Implement query result caching where appropriate
+  - 💡 Keep ORM queries efficient and avoid N+1 problems
+  {% endblock %}

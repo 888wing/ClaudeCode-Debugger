@@ -1,0 +1,106 @@
+name: Network Error
+agent: backend-system-architect
+version: "1.0.0"
+description: Template for network and API errors
+template: |
+  🚨 網路錯誤 - {{ severity|upper }} 優先級 Debug
+
+  ## 錯誤摘要
+  檢測到網路相關錯誤
+  {% if files %}
+  
+  ### 相關文件：
+  {{ affected_files }}
+  {% endif %}
+
+  ### 錯誤信息：
+  ```
+  {{ error_text }}
+  ```
+
+  ## 🔍 網路診斷任務
+
+  1. **錯誤類型分析**
+     {% if "CORS" in error_text %}
+     ### CORS 跨域問題
+     - **前端解決方案**：
+       * 使用代理服務器進行開發
+       * 配置 webpack devServer proxy
+       * 使用 CORS 代理服務
+     
+     - **後端解決方案**：
+       * 添加適當的 CORS headers
+       * 配置允許的來源、方法和標頭
+       * 處理 preflight 請求
+     {% elif "ERR_CONNECTION_REFUSED" in error_text or "ECONNREFUSED" in error_text %}
+     ### 連接被拒絕
+     - 檢查服務是否正在運行
+     - 驗證端口號是否正確
+     - 檢查防火牆設置
+     - 確認 URL 和協議正確
+     {% elif "timeout" in error_text.lower() %}
+     ### 請求超時
+     - 增加超時時間設置
+     - 優化 API 響應時間
+     - 實現重試機制
+     - 考慮分頁或限制數據量
+     {% else %}
+     - 檢查網路連接
+     - 驗證 API endpoint
+     - 檢查認證狀態
+     {% endif %}
+
+  2. **調試步驟**
+     - **網路檢查**：
+       ```bash
+       # 測試連接
+       curl -I https://api.example.com
+       ping api.example.com
+       traceroute api.example.com
+       ```
+     
+     - **瀏覽器調試**：
+       * 打開 Network 面板
+       * 檢查請求和響應標頭
+       * 查看響應狀態碼
+       * 分析請求時序
+
+  3. **實施修復**
+     - **CORS 配置示例**：
+       ```javascript
+       // Express.js
+       app.use(cors({
+         origin: process.env.FRONTEND_URL,
+         credentials: true
+       }));
+       ```
+     
+     - **錯誤處理改進**：
+       ```javascript
+       try {
+         const response = await fetch(url, {
+           timeout: 30000,
+           retry: 3
+         });
+       } catch (error) {
+         if (error.code === 'ECONNREFUSED') {
+           // 處理連接錯誤
+         }
+       }
+       ```
+
+  4. **預防措施**
+     - 實現完善的錯誤處理
+     - 添加請求重試機制
+     - 使用斷路器模式
+     - 監控 API 可用性
+
+  ## 💡 快速檢查清單
+  - [ ] API 服務是否正在運行？
+  - [ ] URL 和端口是否正確？
+  - [ ] 是否有跨域限制？
+  - [ ] 認證 token 是否有效？
+  - [ ] 網路連接是否正常？
+
+  ## 🤖 推薦 Agent
+  使用 `{{ recommended_agent }}` agent 來解決網路配置問題

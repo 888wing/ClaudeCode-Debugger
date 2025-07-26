@@ -1,0 +1,265 @@
+name: Advanced Memory Error Debug Template
+extends: base
+version: "2.0.0"
+description: Comprehensive memory debugging for multiple languages
+category: memory
+agent: backend-system-architect
+tags: [memory, leak, overflow, performance, optimization]
+
+variables:
+  memory_errors:
+    OutOfMemoryError: "Heap space exhausted"
+    StackOverflowError: "Stack space exhausted"
+    MemoryError: "Cannot allocate memory"
+    ENOMEM: "System out of memory"
+    SIGSEGV: "Segmentation fault"
+    HeapCorruption: "Heap corruption detected"
+    
+  languages:
+    java: ["heap", "gc", "jvm", "OutOfMemoryError", "StackOverflowError"]
+    python: ["MemoryError", "gc", "refcount", "circular"]
+    javascript: ["heap", "v8", "node", "memory leak"]
+    cpp: ["malloc", "free", "new", "delete", "segfault"]
+    go: ["goroutine", "heap", "stack", "gc"]
+
+template: |
+  {% extends "base" %}
+  
+  {% block header %}
+  {{ super() }}
+  💾 Memory Issue Detected - {{ (memory_usage|default(0)) }}% Usage
+  {% endblock %}
+  
+  {% block error_details %}
+  ## 🔍 Memory Error Details
+  
+  ### Error Type: `{{ error_type|default('Unknown Memory Error') }}`
+  {% if error_type in memory_errors %}
+  - **Description**: {{ memory_errors[error_type] }}
+  {% endif %}
+  
+  ### Memory Statistics:
+  {% if memory_stats %}
+  - **Heap Used**: {{ memory_stats.heap_used|default('N/A') }} MB
+  - **Heap Total**: {{ memory_stats.heap_total|default('N/A') }} MB
+  - **RSS**: {{ memory_stats.rss|default('N/A') }} MB
+  - **External**: {{ memory_stats.external|default('N/A') }} MB
+  {% endif %}
+  
+  ### Full Error:
+  ```
+  {{ error_text }}
+  ```
+  
+  {% if stack_trace %}
+  ### Stack Trace:
+  ```
+  {{ format_stack_trace(stack_trace, 25) }}
+  ```
+  {% endif %}
+  {% endblock %}
+  
+  {% block analysis_content %}
+  1. **Memory Leak Detection** 🔍
+     - Identify objects not being garbage collected
+     - Check for circular references
+     - Review event listener cleanup
+     - Analyze closure usage
+     - Monitor growing collections
+  
+  2. **Memory Usage Analysis** 📊
+     - Profile heap allocations
+     - Identify large object allocations
+     - Check for unnecessary data retention
+     - Review caching strategies
+     - Analyze memory growth patterns
+  
+  3. **Language-Specific Analysis** 🔧
+     {% if 'java' in error_text.lower() or 'jvm' in error_text.lower() %}
+     ### Java/JVM Analysis:
+     - Check JVM heap settings (-Xmx, -Xms)
+     - Review garbage collection logs
+     - Analyze heap dumps with MAT/jhat
+     - Look for memory leaks in collections
+     - Check for unclosed resources
+     
+     {% elif 'python' in error_text.lower() %}
+     ### Python Analysis:
+     - Use `tracemalloc` for memory tracking
+     - Check for circular references
+     - Review large data structure usage
+     - Analyze generator vs list usage
+     - Check for unclosed file handles
+     
+     {% elif 'javascript' in error_text.lower() or 'node' in error_text.lower() %}
+     ### JavaScript/Node.js Analysis:
+     - Use Chrome DevTools heap profiler
+     - Check for detached DOM nodes
+     - Review closure and event listener cleanup
+     - Analyze Buffer usage
+     - Monitor V8 heap statistics
+     
+     {% elif 'cpp' in error_text.lower() or 'c++' in error_text.lower() %}
+     ### C++ Analysis:
+     - Use Valgrind for memory leak detection
+     - Check for double free errors
+     - Review smart pointer usage
+     - Analyze RAII compliance
+     - Look for buffer overflows
+     {% endif %}
+  
+  4. **System Resource Check** 💻
+     - Monitor system memory availability
+     - Check for other memory-intensive processes
+     - Review swap usage and configuration
+     - Analyze memory limits (ulimit)
+     - Check container memory constraints
+  {% endblock %}
+  
+  {% block fix_content %}
+  ## 🔧 Memory Issue Fixes:
+  
+  ### Immediate Actions:
+  1. **Increase Memory Limits** (Temporary)
+     ```bash
+     # Java
+     java -Xmx4g -Xms2g MyApp
+     
+     # Node.js
+     node --max-old-space-size=4096 app.js
+     
+     # Python
+     ulimit -v unlimited
+     
+     # Docker
+     docker run -m 4g myapp
+     ```
+  
+  2. **Garbage Collection Tuning**
+     {% if 'java' in error_text.lower() %}
+     ```bash
+     # Java G1GC
+     java -XX:+UseG1GC -XX:MaxGCPauseMillis=200 MyApp
+     ```
+     {% elif 'node' in error_text.lower() %}
+     ```javascript
+     // Force garbage collection (development only)
+     if (global.gc) {
+       global.gc();
+     }
+     ```
+     {% elif 'python' in error_text.lower() %}
+     ```python
+     import gc
+     gc.collect()  # Force garbage collection
+     gc.set_threshold(700, 10, 10)  # Tune GC
+     ```
+     {% endif %}
+  
+  ### Code Optimizations:
+  
+  1. **Fix Memory Leaks**
+     ```javascript
+     // JavaScript - Remove event listeners
+     element.removeEventListener('click', handler);
+     
+     // Clear references
+     largeObject = null;
+     
+     // Clear timers
+     clearInterval(intervalId);
+     clearTimeout(timeoutId);
+     ```
+  
+  2. **Optimize Data Structures**
+     ```python
+     # Python - Use generators instead of lists
+     def read_large_file(file_path):
+         with open(file_path, 'r') as file:
+             for line in file:  # Generator
+                 yield line.strip()
+     
+     # Use slots to reduce memory
+     class OptimizedClass:
+         __slots__ = ['x', 'y', 'z']
+     ```
+  
+  3. **Implement Streaming**
+     ```javascript
+     // Node.js - Stream large files
+     const stream = fs.createReadStream('large-file.txt');
+     stream.on('data', (chunk) => {
+         process(chunk);
+     });
+     ```
+  
+  4. **Use Memory Pools**
+     ```cpp
+     // C++ - Object pooling
+     template<typename T>
+     class ObjectPool {
+         std::vector<std::unique_ptr<T>> pool;
+     public:
+         T* acquire() { /* ... */ }
+         void release(T* obj) { /* ... */ }
+     };
+     ```
+  {% endblock %}
+  
+  {% block prevention_content %}
+  - **Memory Profiling Tools** 🔍
+    ```bash
+    # Java
+    jmap -heap <pid>
+    jconsole
+    
+    # Python
+    pip install memory-profiler
+    python -m memory_profiler script.py
+    
+    # Node.js
+    node --inspect app.js
+    # Use Chrome DevTools
+    
+    # C++
+    valgrind --leak-check=full ./program
+    ```
+  
+  - **Best Practices** 📋
+    - Always close resources (files, connections, streams)
+    - Use weak references for caches
+    - Implement proper object lifecycle management
+    - Avoid global variables
+    - Clear large objects when done
+    - Use streaming for large data
+  
+  - **Monitoring Setup** 📊
+    ```javascript
+    // Node.js monitoring
+    setInterval(() => {
+        const used = process.memoryUsage();
+        console.log(`Memory: ${used.heapUsed / 1024 / 1024} MB`);
+    }, 5000);
+    ```
+  
+  - **Memory Limits Configuration** ⚙️
+    ```yaml
+    # Kubernetes
+    resources:
+      limits:
+        memory: "1Gi"
+      requests:
+        memory: "512Mi"
+    ```
+  {% endblock %}
+  
+  {% block tips_content %}
+  - 💡 Profile before optimizing - measure don't guess
+  - 💡 Use memory profilers specific to your language
+  - 💡 Monitor memory usage in production
+  - 💡 Set up alerts for memory thresholds
+  - 💡 Use streaming/pagination for large datasets
+  - 💡 Implement circuit breakers for memory-intensive operations
+  - 💡 Regular heap dump analysis in production
+  - 💡 Consider using memory-mapped files for large data
+  {% endblock %}

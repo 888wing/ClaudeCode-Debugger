@@ -1,0 +1,412 @@
+name: API & Network Error Debug Template
+extends: base
+version: "2.0.0"
+description: Comprehensive API and network error debugging
+category: network
+agent: backend-system-architect
+tags: [api, network, http, rest, graphql, websocket, timeout]
+
+variables:
+  http_codes:
+    400: "Bad Request - Invalid request syntax"
+    401: "Unauthorized - Authentication required"
+    403: "Forbidden - Access denied"
+    404: "Not Found - Resource doesn't exist"
+    405: "Method Not Allowed"
+    408: "Request Timeout"
+    409: "Conflict - Resource state conflict"
+    413: "Payload Too Large"
+    429: "Too Many Requests - Rate limited"
+    500: "Internal Server Error"
+    502: "Bad Gateway - Upstream server error"
+    503: "Service Unavailable"
+    504: "Gateway Timeout"
+    
+  network_errors:
+    ECONNREFUSED: "Connection refused by server"
+    ECONNRESET: "Connection reset by peer"
+    ETIMEDOUT: "Connection timed out"
+    EHOSTUNREACH: "Host unreachable"
+    ENETUNREACH: "Network unreachable"
+    ENOTFOUND: "DNS lookup failed"
+    EPIPE: "Broken pipe"
+    EADDRINUSE: "Address already in use"
+
+template: |
+  {% extends "base" %}
+  
+  {% block header %}
+  {{ super() }}
+  🌐 Network/API Issue Detected
+  {% if 'graphql' in error_text.lower() %}
+  📊 GraphQL Context
+  {% elif 'websocket' in error_text.lower() %}
+  🔌 WebSocket Context
+  {% endif %}
+  {% endblock %}
+  
+  {% block error_details %}
+  ## 🔍 Network Error Details
+  
+  {% if http_status %}
+  ### HTTP Status: `{{ http_status }}`
+  {% if http_status|int in http_codes %}
+  - **Description**: {{ http_codes[http_status|int] }}
+  {% endif %}
+  {% endif %}
+  
+  {% if request_info %}
+  ### Request Details:
+  - **Method**: `{{ request_info.method|default('GET') }}`
+  - **URL**: `{{ request_info.url }}`
+  - **Headers**: {{ request_info.headers|length }} headers sent
+  {% if request_info.body %}
+  - **Body Size**: {{ request_info.body|length }} bytes
+  {% endif %}
+  {% endif %}
+  
+  {% if response_info %}
+  ### Response Details:
+  - **Status**: {{ response_info.status }}
+  - **Time**: {{ response_info.time|default('N/A') }}ms
+  - **Size**: {{ response_info.size|default('N/A') }} bytes
+  {% endif %}
+  
+  ### Full Error:
+  ```
+  {{ error_text }}
+  ```
+  
+  {% if stack_trace %}
+  ### Network Stack Trace:
+  ```
+  {{ format_stack_trace(stack_trace, 15) }}
+  ```
+  {% endif %}
+  {% endblock %}
+  
+  {% block analysis_content %}
+  1. **Connection Analysis** 🔌
+     ```bash
+     # Test connectivity
+     curl -v {{ request_info.url if request_info else 'https://api.example.com' }}
+     
+     # Check DNS resolution
+     nslookup {{ request_info.host if request_info else 'api.example.com' }}
+     
+     # Test port connectivity
+     telnet {{ request_info.host if request_info else 'api.example.com' }} {{ request_info.port|default(443) }}
+     
+     # Trace network path
+     traceroute {{ request_info.host if request_info else 'api.example.com' }}
+     ```
+  
+  2. **API Health Check** 🏥
+     - Verify API endpoint is accessible
+     - Check API status/health endpoint
+     - Review API rate limits
+     - Validate authentication tokens
+     - Check CORS configuration
+  
+  3. **Request/Response Analysis** 📊
+     {% if 'timeout' in error_text.lower() %}
+     ### Timeout Analysis:
+     - Check current timeout settings
+     - Monitor response times
+     - Identify slow endpoints
+     - Review network latency
+     {% elif http_status == '429' or 'rate limit' in error_text.lower() %}
+     ### Rate Limiting Analysis:
+     - Check rate limit headers
+     - Implement exponential backoff
+     - Review request patterns
+     - Consider caching strategies
+     {% elif http_status in ['401', '403'] %}
+     ### Authentication Analysis:
+     - Verify credentials/tokens
+     - Check token expiration
+     - Review permissions/scopes
+     - Validate auth flow
+     {% endif %}
+  
+  4. **Protocol-Specific Checks** 🔧
+     {% if 'graphql' in error_text.lower() %}
+     ### GraphQL Specific:
+     - Validate query syntax
+     - Check query complexity
+     - Review schema changes
+     - Monitor resolver performance
+     {% elif 'websocket' in error_text.lower() %}
+     ### WebSocket Specific:
+     - Check upgrade headers
+     - Verify protocol version
+     - Monitor connection stability
+     - Review message size limits
+     {% endif %}
+  {% endblock %}
+  
+  {% block fix_content %}
+  ## 🔧 Network/API Fixes:
+  
+  {% if 'timeout' in error_text.lower() %}
+  ### Fixing Timeout Issues:
+  ```javascript
+  // Increase timeout settings
+  const axios = require('axios');
+  
+  const client = axios.create({
+    timeout: 30000, // 30 seconds
+    retry: 3,
+    retryDelay: 1000,
+  });
+  
+  // With retry logic
+  async function fetchWithRetry(url, options = {}) {
+    const maxRetries = 3;
+    let lastError;
+    
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        return await fetch(url, {
+          ...options,
+          signal: AbortSignal.timeout(30000),
+        });
+      } catch (error) {
+        lastError = error;
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+      }
+    }
+    throw lastError;
+  }
+  ```
+  {% endif %}
+  
+  {% if http_status == '429' or 'rate limit' in error_text.lower() %}
+  ### Handling Rate Limits:
+  ```python
+  import time
+  import requests
+  from functools import wraps
+  
+  def rate_limit_handler(func):
+      @wraps(func)
+      def wrapper(*args, **kwargs):
+          max_retries = 5
+          
+          for attempt in range(max_retries):
+              response = func(*args, **kwargs)
+              
+              if response.status_code == 429:
+                  # Get retry-after header
+                  retry_after = int(response.headers.get('Retry-After', 60))
+                  print(f"Rate limited. Waiting {retry_after}s...")
+                  time.sleep(retry_after)
+              else:
+                  return response
+                  
+          return response
+      return wrapper
+  
+  @rate_limit_handler
+  def make_api_call(url):
+      return requests.get(url)
+  ```
+  {% endif %}
+  
+  {% if 'cors' in error_text.lower() %}
+  ### Fixing CORS Issues:
+  ```javascript
+  // Server-side (Express.js)
+  const cors = require('cors');
+  
+  app.use(cors({
+    origin: ['https://allowed-origin.com'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }));
+  
+  // Client-side
+  fetch('https://api.example.com/data', {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  ```
+  {% endif %}
+  
+  {% if 'ssl' in error_text.lower() or 'certificate' in error_text.lower() %}
+  ### Fixing SSL/Certificate Issues:
+  ```bash
+  # Check certificate
+  openssl s_client -connect api.example.com:443 -servername api.example.com
+  
+  # Node.js - Accept self-signed certificates (dev only!)
+  process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+  
+  # Python - Custom CA bundle
+  import requests
+  response = requests.get(url, verify='/path/to/ca-bundle.crt')
+  ```
+  {% endif %}
+  
+  ### General Network Debugging:
+  ```javascript
+  // Add comprehensive error handling
+  async function apiCall(url, options = {}) {
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        error.response = response;
+        error.body = await response.text();
+        throw error;
+      }
+      
+      return await response.json();
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED') {
+        console.error('Server is not running or refusing connections');
+      } else if (error.code === 'ETIMEDOUT') {
+        console.error('Request timed out');
+      } else if (error.name === 'AbortError') {
+        console.error('Request was cancelled');
+      }
+      
+      throw error;
+    }
+  }
+  ```
+  {% endblock %}
+  
+  {% block prevention_content %}
+  - **Implement Robust Error Handling** 🛡️
+    ```javascript
+    class ApiClient {
+      constructor(baseURL) {
+        this.baseURL = baseURL;
+        this.timeout = 30000;
+        this.retries = 3;
+      }
+      
+      async request(endpoint, options = {}) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+        
+        try {
+          const response = await fetch(`${this.baseURL}${endpoint}`, {
+            ...options,
+            signal: controller.signal,
+          });
+          
+          clearTimeout(timeoutId);
+          return this.handleResponse(response);
+        } catch (error) {
+          clearTimeout(timeoutId);
+          return this.handleError(error);
+        }
+      }
+      
+      async handleResponse(response) {
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new ApiError(response.status, data.message || response.statusText, data);
+        }
+        
+        return data;
+      }
+      
+      handleError(error) {
+        if (error.name === 'AbortError') {
+          throw new TimeoutError('Request timeout');
+        }
+        throw error;
+      }
+    }
+    ```
+  
+  - **Add Monitoring and Alerting** 📊
+    ```javascript
+    // Log all API calls
+    const apiLogger = {
+      logRequest: (method, url, headers) => {
+        console.log(`[API] ${method} ${url}`, { headers });
+      },
+      
+      logResponse: (status, time, size) => {
+        console.log(`[API] Response: ${status} in ${time}ms (${size} bytes)`);
+      },
+      
+      logError: (error, context) => {
+        console.error('[API] Error:', error, context);
+        // Send to monitoring service
+      },
+    };
+    ```
+  
+  - **Implement Circuit Breaker Pattern** 🔌
+    ```javascript
+    class CircuitBreaker {
+      constructor(request, options = {}) {
+        this.request = request;
+        this.state = 'CLOSED';
+        this.failures = 0;
+        this.threshold = options.threshold || 5;
+        this.timeout = options.timeout || 60000;
+      }
+      
+      async call(...args) {
+        if (this.state === 'OPEN') {
+          throw new Error('Circuit breaker is OPEN');
+        }
+        
+        try {
+          const result = await this.request(...args);
+          this.onSuccess();
+          return result;
+        } catch (error) {
+          this.onFailure();
+          throw error;
+        }
+      }
+      
+      onSuccess() {
+        this.failures = 0;
+        this.state = 'CLOSED';
+      }
+      
+      onFailure() {
+        this.failures++;
+        if (this.failures >= this.threshold) {
+          this.state = 'OPEN';
+          setTimeout(() => {
+            this.state = 'HALF-OPEN';
+          }, this.timeout);
+        }
+      }
+    }
+    ```
+  {% endblock %}
+  
+  {% block tips_content %}
+  - 💡 Use request/response interceptors for logging
+  - 💡 Implement proper timeout handling
+  - 💡 Cache API responses when appropriate
+  - 💡 Use connection pooling for better performance
+  - 💡 Monitor API latency and error rates
+  - 💡 Implement exponential backoff for retries
+  - 💡 Use health check endpoints
+  - 💡 Document API error codes and meanings
+  - 💡 Test with network throttling tools
+  - 💡 Use API mocking for development
+  {% endblock %}

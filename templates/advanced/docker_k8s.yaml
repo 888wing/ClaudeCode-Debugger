@@ -1,0 +1,293 @@
+name: Docker & Kubernetes Error Debug Template
+extends: base
+version: "2.0.0"
+description: Container and orchestration error debugging
+category: container
+agent: backend-system-architect
+tags: [docker, kubernetes, k8s, container, pod, deployment]
+
+variables:
+  docker_errors:
+    "Cannot connect to Docker daemon": "Docker service not running"
+    "No space left on device": "Disk space exhausted"
+    "permission denied": "Permission/ownership issues"
+    "exec format error": "Architecture mismatch"
+    "OOMKilled": "Out of memory"
+    
+  k8s_errors:
+    "ImagePullBackOff": "Cannot pull container image"
+    "CrashLoopBackOff": "Container keeps crashing"
+    "Pending": "Pod cannot be scheduled"
+    "OOMKilled": "Container exceeded memory limit"
+    "ErrImagePull": "Image pull failed"
+    "CreateContainerConfigError": "Config issue"
+
+template: |
+  {% extends "base" %}
+  
+  {% block header %}
+  {{ super() }}
+  🐳 Container/Orchestration Issue
+  {% if 'kubernetes' in error_text.lower() or 'k8s' in error_text.lower() %}
+  ☸️  Kubernetes Context Detected
+  {% endif %}
+  {% endblock %}
+  
+  {% block error_details %}
+  ## 🔍 Container Error Details
+  
+  {% if pod_name %}
+  ### Pod Information:
+  - **Name**: `{{ pod_name }}`
+  - **Namespace**: `{{ namespace|default('default') }}`
+  - **Status**: `{{ pod_status }}`
+  {% endif %}
+  
+  {% if container_name %}
+  ### Container Information:
+  - **Name**: `{{ container_name }}`
+  - **Image**: `{{ image_name }}`
+  - **State**: `{{ container_state }}`
+  {% endif %}
+  
+  ### Error Output:
+  ```
+  {{ error_text }}
+  ```
+  
+  {% if events %}
+  ### Recent Events:
+  {% for event in events[-10:] %}
+  - {{ event.time }}: {{ event.type }} - {{ event.reason }}: {{ event.message }}
+  {% endfor %}
+  {% endif %}
+  {% endblock %}
+  
+  {% block analysis_content %}
+  1. **Container Status Check** 🐳
+     ```bash
+     # Docker
+     docker ps -a
+     docker logs <container_id> --tail 50
+     docker inspect <container_id>
+     
+     # Kubernetes
+     kubectl get pods -n {{ namespace|default('default') }}
+     kubectl describe pod {{ pod_name }} -n {{ namespace|default('default') }}
+     kubectl logs {{ pod_name }} -n {{ namespace|default('default') }} --previous
+     ```
+  
+  2. **Resource Analysis** 📊
+     ```bash
+     # Check resource usage
+     kubectl top pods -n {{ namespace|default('default') }}
+     kubectl top nodes
+     
+     # Check resource requests/limits
+     kubectl describe pod {{ pod_name }} -n {{ namespace|default('default') }} | grep -A5 "Limits\|Requests"
+     ```
+  
+  3. **Image and Registry Check** 🖼️
+     ```bash
+     # Verify image exists
+     docker pull {{ image_name }}
+     
+     # Check image layers
+     docker history {{ image_name }}
+     
+     # Kubernetes secrets for registry
+     kubectl get secrets -n {{ namespace|default('default') }}
+     ```
+  
+  4. **Network and Configuration** 🌐
+     ```bash
+     # Check services
+     kubectl get svc -n {{ namespace|default('default') }}
+     
+     # Check configmaps and secrets
+     kubectl get configmap -n {{ namespace|default('default') }}
+     kubectl get secrets -n {{ namespace|default('default') }}
+     
+     # Check network policies
+     kubectl get networkpolicy -n {{ namespace|default('default') }}
+     ```
+  {% endblock %}
+  
+  {% block fix_content %}
+  ## 🔧 Container Issue Fixes:
+  
+  {% if 'ImagePullBackOff' in error_text or 'ErrImagePull' in error_text %}
+  ### Fixing Image Pull Issues:
+  ```bash
+  # 1. Check image name and tag
+  kubectl describe pod {{ pod_name }} -n {{ namespace|default('default') }} | grep Image
+  
+  # 2. Verify registry credentials
+  kubectl create secret docker-registry regcred \
+    --docker-server=<registry> \
+    --docker-username=<username> \
+    --docker-password=<password> \
+    --docker-email=<email>
+  
+  # 3. Update deployment with secret
+  kubectl patch deployment <deployment> -p '{"spec":{"template":{"spec":{"imagePullSecrets":[{"name":"regcred"}]}}}}'
+  
+  # 4. For private registries, check access
+  docker login <registry>
+  ```
+  {% endif %}
+  
+  {% if 'CrashLoopBackOff' in error_text %}
+  ### Fixing Crash Loop Issues:
+  ```bash
+  # 1. Check logs from previous run
+  kubectl logs {{ pod_name }} -n {{ namespace|default('default') }} --previous
+  
+  # 2. Check liveness/readiness probes
+  kubectl get pod {{ pod_name }} -n {{ namespace|default('default') }} -o yaml | grep -A10 "livenessProbe\|readinessProbe"
+  
+  # 3. Increase probe delays
+  kubectl patch deployment <deployment> --type='json' -p='[
+    {"op": "replace", "path": "/spec/template/spec/containers/0/livenessProbe/initialDelaySeconds", "value":60},
+    {"op": "replace", "path": "/spec/template/spec/containers/0/readinessProbe/initialDelaySeconds", "value":30}
+  ]'
+  
+  # 4. Debug with sleep container
+  kubectl run -i --tty --rm debug --image=busybox --restart=Never -- sh
+  ```
+  {% endif %}
+  
+  {% if 'OOMKilled' in error_text %}
+  ### Fixing Memory Issues:
+  ```yaml
+  # Update resource limits
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: {{ deployment_name|default('app') }}
+  spec:
+    template:
+      spec:
+        containers:
+        - name: {{ container_name|default('app') }}
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"  # Increase this
+              cpu: "500m"
+  ```
+  
+  ```bash
+  # Apply changes
+  kubectl apply -f deployment.yaml
+  
+  # Monitor memory usage
+  kubectl top pod {{ pod_name }} -n {{ namespace|default('default') }} --containers
+  ```
+  {% endif %}
+  
+  {% if 'Pending' in error_text %}
+  ### Fixing Scheduling Issues:
+  ```bash
+  # 1. Check node capacity
+  kubectl describe nodes | grep -A5 "Allocated resources"
+  
+  # 2. Check pod events
+  kubectl describe pod {{ pod_name }} -n {{ namespace|default('default') }} | grep -A10 Events
+  
+  # 3. Check for node selectors/affinity
+  kubectl get pod {{ pod_name }} -n {{ namespace|default('default') }} -o yaml | grep -A5 "nodeSelector\|affinity"
+  
+  # 4. Check for PVC issues
+  kubectl get pvc -n {{ namespace|default('default') }}
+  
+  # 5. Scale down other deployments if needed
+  kubectl scale deployment <other-deployment> --replicas=0
+  ```
+  {% endif %}
+  
+  ### General Debugging Commands:
+  ```bash
+  # Execute into container
+  kubectl exec -it {{ pod_name }} -n {{ namespace|default('default') }} -- /bin/bash
+  
+  # Port forward for testing
+  kubectl port-forward pod/{{ pod_name }} 8080:80 -n {{ namespace|default('default') }}
+  
+  # Get all resources
+  kubectl get all -n {{ namespace|default('default') }}
+  
+  # Check cluster events
+  kubectl get events -n {{ namespace|default('default') }} --sort-by='.lastTimestamp'
+  ```
+  {% endblock %}
+  
+  {% block prevention_content %}
+  - **Resource Management** 📊
+    ```yaml
+    # Always set resource requests and limits
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+    ```
+  
+  - **Health Checks** 🏥
+    ```yaml
+    # Configure proper probes
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    ```
+  
+  - **Image Best Practices** 🖼️
+    ```dockerfile
+    # Multi-stage builds
+    FROM node:16-alpine AS builder
+    WORKDIR /app
+    COPY package*.json ./
+    RUN npm ci --only=production
+    
+    FROM node:16-alpine
+    WORKDIR /app
+    COPY --from=builder /app/node_modules ./node_modules
+    COPY . .
+    USER node
+    EXPOSE 3000
+    CMD ["node", "server.js"]
+    ```
+  
+  - **Monitoring Setup** 📈
+    ```bash
+    # Install metrics server
+    kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    
+    # Use Prometheus for monitoring
+    helm install prometheus prometheus-community/kube-prometheus-stack
+    ```
+  {% endblock %}
+  
+  {% block tips_content %}
+  - 💡 Always use specific image tags, not `latest`
+  - 💡 Set resource requests and limits appropriately
+  - 💡 Use init containers for setup tasks
+  - 💡 Implement graceful shutdown handling
+  - 💡 Use ConfigMaps for configuration, Secrets for sensitive data
+  - 💡 Test containers locally before deploying
+  - 💡 Use namespaces for environment isolation
+  - 💡 Enable container security scanning in CI/CD
+  {% endblock %}

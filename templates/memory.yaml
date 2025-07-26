@@ -1,0 +1,79 @@
+name: Memory Error
+agent: backend-system-architect
+version: "1.0.0"
+description: Template for memory-related errors
+template: |
+  🚨 記憶體錯誤 - {{ severity|upper }} 優先級 Debug
+
+  ## 錯誤摘要
+  檢測到記憶體相關錯誤 - 需要立即處理！
+
+  ### 錯誤信息：
+  ```
+  {{ error_text }}
+  ```
+
+  ## 🔍 緊急分析任務
+
+  1. **立即行動**
+     {% if "JavaScript heap out of memory" in error_text %}
+     ### Node.js 記憶體溢出
+     - 增加記憶體限制：`node --max-old-space-size=4096 script.js`
+     - 檢查記憶體洩漏：無限循環、未釋放的大對象
+     - 分析大型數據處理邏輯
+     {% elif "Maximum call stack" in error_text %}
+     ### 堆棧溢出
+     - 檢查無限遞歸
+     - 驗證遞歸終止條件
+     - 考慮改用迭代方式
+     {% else %}
+     - 監控當前記憶體使用
+     - 識別記憶體密集操作
+     - 實施記憶體優化策略
+     {% endif %}
+
+  2. **記憶體洩漏檢測**
+     - 使用 Chrome DevTools Memory Profiler
+     - Node.js: 使用 `--inspect` 和 heap snapshots
+     - 檢查以下常見問題：
+       * 未清理的事件監聽器
+       * 未釋放的大型數組/對象
+       * 閉包中的意外引用
+       * 循環引用
+
+  3. **優化策略**
+     - **數據處理優化**：
+       * 實現分頁/流式處理
+       * 使用 generators 處理大數據
+       * 及時釋放不需要的引用
+     
+     - **代碼結構優化**：
+       * 避免全局變量
+       * 使用 WeakMap/WeakSet
+       * 實現對象池模式
+
+  4. **長期解決方案**
+     - 實施記憶體監控
+     - 設置記憶體使用警報
+     - 優化數據結構
+     - 考慮使用 Worker threads
+
+  ## 💡 快速修復
+  ```bash
+  # 臨時增加 Node.js 記憶體
+  export NODE_OPTIONS="--max-old-space-size=8192"
+  
+  # 或在 package.json 中
+  "scripts": {
+    "start": "node --max-old-space-size=4096 index.js"
+  }
+  ```
+
+  ## ⚠️ 預防措施
+  - 定期進行記憶體分析
+  - 實施資源使用限制
+  - 優化大數據處理流程
+  - 添加記憶體使用監控
+
+  ## 🤖 推薦 Agent
+  使用 `{{ recommended_agent }}` agent 來深入分析和解決記憶體問題

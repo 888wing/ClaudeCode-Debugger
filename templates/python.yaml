@@ -1,0 +1,75 @@
+name: Python Exception
+agent: backend-system-architect
+version: "1.0.0"
+description: Template for Python exceptions and errors
+template: |
+  🚨 Python 異常 - {{ severity|upper }} 優先級 Debug
+
+  ## 錯誤摘要
+  檢測到 Python 異常
+  {% if files %}
+  
+  ### 影響文件：
+  {{ affected_files }}
+  {% endif %}
+  
+  {% if line_numbers %}
+  ### 錯誤行號：
+  {% for line in line_numbers %}
+  - Line {{ line }}
+  {% endfor %}
+  {% endif %}
+
+  ## 異常詳情
+  {% if error_codes %}
+  ### 異常類型：
+  {% for code in error_codes %}
+  - {{ code }}{% if code == 'ImportError' %}: 導入錯誤{% elif code == 'TypeError' %}: 類型錯誤{% elif code == 'ValueError' %}: 值錯誤{% elif code == 'KeyError' %}: 鍵錯誤{% elif code == 'AttributeError' %}: 屬性錯誤{% endif %}
+  {% endfor %}
+  {% endif %}
+
+  ### Stack Trace：
+  ```python
+  {{ error_text }}
+  ```
+
+  ## 🔍 Debug 任務
+
+  1. **根本原因分析**
+     - 定位錯誤發生的確切位置
+     - 分析錯誤的觸發條件
+     - 檢查相關變量的值和類型
+
+  2. **修復策略**
+     {% if 'ImportError' in error_codes %}
+     - 檢查模塊是否已安裝: `pip list | grep module_name`
+     - 更新 requirements.txt
+     - 檢查虛擬環境是否激活
+     {% elif 'TypeError' in error_codes %}
+     - 檢查函數參數類型
+     - 添加類型檢查和驗證
+     - 考慮使用 type hints
+     {% else %}
+     - 實現適當的錯誤處理
+     - 添加輸入驗證
+     - 提供有意義的錯誤信息
+     {% endif %}
+
+  3. **預防措施**
+     - 添加單元測試覆蓋此場景
+     - 實現更好的錯誤處理機制
+     - 考慮使用 typing 模塊進行類型註解
+
+  4. **最佳實踐**
+     - 使用 try-except 塊進行錯誤處理
+     - 記錄詳細的錯誤日誌
+     - 實現優雅的降級策略
+
+  ## 💡 快速檢查清單
+  - [ ] 虛擬環境是否正確激活？
+  - [ ] 所有依賴是否已安裝？
+  - [ ] Python 版本是否兼容？
+  - [ ] 是否有拼寫錯誤？
+
+  ## 🤖 推薦 Agent
+  使用 `{{ recommended_agent }}` agent 來處理此類錯誤

@@ -1,0 +1,264 @@
+name: Advanced Python Debug Template
+extends: base
+version: "2.0.0"
+description: Comprehensive Python error debugging with async and framework support
+category: python
+agent: backend-system-architect
+tags: [python, exception, async, django, fastapi, flask]
+language: python
+
+variables:
+  python_errors:
+    NameError: "Name '{}' is not defined"
+    TypeError: "Invalid type operation"
+    ValueError: "Invalid value provided"
+    ImportError: "Module import failed"
+    AttributeError: "Attribute '{}' not found"
+    KeyError: "Key '{}' not found in dict"
+    IndexError: "List index out of range"
+    ZeroDivisionError: "Division by zero"
+    FileNotFoundError: "File or directory not found"
+    PermissionError: "Permission denied"
+    asyncio.TimeoutError: "Async operation timed out"
+    
+  frameworks:
+    django: ["models", "views", "migrations", "admin", "urls"]
+    fastapi: ["router", "depends", "pydantic", "async", "await"]
+    flask: ["route", "blueprint", "request", "response", "app"]
+
+includes:
+  - "{% if 'asyncio' in error_text or 'async' in error_text %}async_debug{% endif %}"
+  - "{% if 'django' in error_text.lower() %}django_helpers{% endif %}"
+  - "{% if 'fastapi' in error_text.lower() %}fastapi_helpers{% endif %}"
+
+template: |
+  {% extends "base" %}
+  
+  {% block header %}
+  {{ super() }}
+  {% if 'asyncio' in error_text or 'async' in error_text %}
+  ⚡ Async/Await Context Detected
+  {% endif %}
+  {% endblock %}
+  
+  {% block error_details %}
+  ## 🔍 Error Details
+  
+  {% if error_type %}
+  ### Exception Type: `{{ error_type }}`
+  {% if error_type in python_errors %}
+  - **Pattern**: {{ python_errors[error_type] }}
+  - **Common Causes**: {{ suggest_fix('python', error_type)|join(', ') }}
+  {% endif %}
+  {% endif %}
+  
+  ### Full Error:
+  ```python
+  {{ error_text }}
+  ```
+  
+  {% if stack_trace %}
+  ### Stack Trace Analysis:
+  ```python
+  {{ format_stack_trace(stack_trace, 20) }}
+  ```
+  
+  #### Key Frames:
+  {% for file in files[:5] %}
+  - {{ file_icon(file) }} `{{ file }}`{% if line_numbers[loop.index0] %} (line {{ line_numbers[loop.index0] }}){% endif %}
+  {% endfor %}
+  {% endif %}
+  {% endblock %}
+  
+  {% block analysis_content %}
+  1. **Exception Analysis** 🔍
+     - Identify the exception type and message
+     - Trace the error origin through the stack
+     - Check for exception chaining (`__cause__`)
+     - Review error handling patterns
+  
+  2. **Environment Check** 🌍
+     - Verify Python version compatibility
+     - Check installed packages and versions
+     - Review virtual environment setup
+     - Validate environment variables
+  
+  3. **Async Context** ⚡
+     {% if 'asyncio' in error_text or 'async' in error_text %}
+     - Check for missing `await` keywords
+     - Verify event loop is running
+     - Look for synchronous calls in async context
+     - Review task cancellation handling
+     {% endif %}
+  
+  4. **Framework-Specific** 🎨
+     {% if 'django' in error_text.lower() %}
+     - Check Django settings configuration
+     - Verify database migrations are applied
+     - Review model relationships
+     - Check middleware order
+     {% elif 'fastapi' in error_text.lower() %}
+     - Verify Pydantic model definitions
+     - Check dependency injection
+     - Review async route handlers
+     - Validate request/response models
+     {% elif 'flask' in error_text.lower() %}
+     - Check Flask app configuration
+     - Verify blueprint registration
+     - Review request context
+     - Check extension initialization
+     {% endif %}
+  {% endblock %}
+  
+  {% block fix_content %}
+  {% if error_type %}
+  ## 🔧 Specific Fixes for {{ error_type }}:
+  
+  {% if error_type == 'NameError' %}
+  ### Fixing NameError:
+  ```python
+  # Option 1: Import missing module
+  from module import missing_name
+  
+  # Option 2: Define the variable
+  missing_name = "default_value"
+  
+  # Option 3: Check for typos
+  # correct_name vs incorrect_name
+  ```
+  
+  {% elif error_type == 'ImportError' or error_type == 'ModuleNotFoundError' %}
+  ### Fixing Import Error:
+  ```python
+  # Option 1: Install missing package
+  # pip install missing-package
+  
+  # Option 2: Fix import path
+  from correct.module.path import item
+  
+  # Option 3: Add to PYTHONPATH
+  import sys
+  sys.path.append('/path/to/module')
+  
+  # Option 4: Use relative imports
+  from . import module
+  from ..parent import module
+  ```
+  
+  {% elif error_type == 'TypeError' %}
+  ### Fixing TypeError:
+  ```python
+  # Option 1: Check argument types
+  def func(x: int, y: int) -> int:
+      return x + y
+  
+  # Call with correct types
+  result = func(1, 2)  # Not func("1", 2)
+  
+  # Option 2: Handle None values
+  value = obj.method() if obj is not None else default
+  
+  # Option 3: Use type checking
+  if isinstance(value, expected_type):
+      process(value)
+  ```
+  
+  {% elif 'asyncio' in error_type %}
+  ### Fixing Async Error:
+  ```python
+  # Option 1: Add missing await
+  result = await async_function()
+  
+  # Option 2: Run in event loop
+  import asyncio
+  asyncio.run(main())
+  
+  # Option 3: Handle timeout
+  try:
+      result = await asyncio.wait_for(
+          async_operation(), 
+          timeout=30.0
+      )
+  except asyncio.TimeoutError:
+      # Handle timeout
+      pass
+  ```
+  {% endif %}
+  {% endif %}
+  
+  ## 📋 General Python Fix Checklist:
+  1. ✅ Check Python version compatibility
+  2. ✅ Verify all imports are correct
+  3. ✅ Ensure virtual environment is activated
+  4. ✅ Update requirements.txt/poetry.lock
+  5. ✅ Add proper error handling
+  6. ✅ Use type hints for clarity
+  {% endblock %}
+  
+  {% block prevention_content %}
+  - **Use Type Hints** 📝
+    ```python
+    from typing import List, Optional, Union
+    
+    def process_data(
+        items: List[str], 
+        default: Optional[str] = None
+    ) -> Union[str, None]:
+        return items[0] if items else default
+    ```
+  
+  - **Add Comprehensive Error Handling** 🛡️
+    ```python
+    try:
+        result = risky_operation()
+    except SpecificError as e:
+        logger.error(f"Operation failed: {e}")
+        # Handle specific error
+    except Exception as e:
+        logger.exception("Unexpected error")
+        raise  # Re-raise after logging
+    finally:
+        cleanup()
+    ```
+  
+  - **Use Linting and Type Checking** 🔍
+    ```bash
+    # Install tools
+    pip install pylint mypy black isort
+    
+    # Add to pre-commit
+    mypy --strict src/
+    pylint src/
+    black --check src/
+    ```
+  
+  - **Write Comprehensive Tests** 🧪
+    ```python
+    import pytest
+    
+    def test_function_with_error():
+        with pytest.raises(ValueError, match="Invalid input"):
+            function_that_should_fail("bad input")
+    ```
+  
+  - **Use Logging for Debugging** 📊
+    ```python
+    import logging
+    
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    
+    logger.debug("Detailed info: %s", variable)
+    logger.error("Error occurred", exc_info=True)
+    ```
+  {% endblock %}
+  
+  {% block tips_content %}
+  - 💡 Use `python -m pdb` for interactive debugging
+  - 💡 Enable `PYTHONWARNINGS=all` to see all warnings
+  - 💡 Use `traceback.print_exc()` for detailed traces
+  - 💡 Install `rich` for better error formatting
+  - 💡 Use `@functools.lru_cache` to debug repeated calls
+  - 💡 Try `python -m trace -t script.py` for execution trace
+  - 💡 Use virtual environments to isolate dependencies
+  {% endblock %}

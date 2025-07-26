@@ -1,0 +1,55 @@
+# Default debug prompt template
+name: default
+description: Standard debug prompt template for Claude Code
+
+sections:
+  - name: error_summary
+    title: "Error Summary"
+    format: |
+      **Error Type**: {error_type}
+      **Location**: {file}:{line}
+      **Message**: {error_message}
+    
+  - name: code_context
+    title: "Code Context"
+    format: |
+      ```{language}
+      {code_snippet}
+      ```
+    
+  - name: stack_trace
+    title: "Stack Trace"
+    format: |
+      ```
+      {stack_trace}
+      ```
+    
+  - name: environment
+    title: "Environment Details"
+    format: |
+      - **Python Version**: {python_version}
+      - **OS**: {os_info}
+      - **Working Directory**: {cwd}
+    
+  - name: debug_request
+    title: "Debug Request"
+    format: |
+      Please help me debug this {error_type} error. The error occurs at {location} with the message: "{error_message}".
+      
+      I need help understanding:
+      1. Why this error is occurring
+      2. How to fix it
+      3. Best practices to prevent this in the future
+
+variables:
+  error_type: "Error type extracted from traceback"
+  error_message: "Error message from traceback"
+  file: "File where error occurred"
+  line: "Line number where error occurred"
+  location: "file:line format"
+  code_snippet: "Relevant code around the error"
+  stack_trace: "Full stack trace"
+  python_version: "Python version"
+  os_info: "Operating system information"
+  cwd: "Current working directory"
+  language: "Programming language"
