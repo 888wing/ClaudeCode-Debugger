@@ -1,0 +1,409 @@
+name: CI/CD Pipeline Error Debug Template
+extends: base
+version: "2.0.0"
+description: Comprehensive CI/CD pipeline error debugging
+category: cicd
+agent: backend-system-architect
+tags: [cicd, jenkins, github-actions, gitlab-ci, circleci, travis, pipeline, build]
+
+variables:
+  ci_platforms:
+    github: ["actions", "workflow", "runner", "GITHUB_TOKEN"]
+    gitlab: ["gitlab-ci", "pipeline", "runner", "CI_JOB_TOKEN"]
+    jenkins: ["jenkinsfile", "pipeline", "agent", "stage"]
+    circleci: ["config.yml", "orb", "executor", "workflow"]
+    travis: [".travis.yml", "matrix", "stage", "jobs"]
+    
+  common_failures:
+    "exit code 1": "Command failed with non-zero exit code"
+    "permission denied": "Insufficient permissions"
+    "not found": "Command or file not found"
+    "timeout": "Job exceeded time limit"
+    "out of memory": "Insufficient memory"
+    "no space left": "Disk space exhausted"
+
+template: |
+  {% extends "base" %}
+  
+  {% block header %}
+  {{ super() }}
+  🔧 CI/CD Pipeline Failure
+  {% if ci_platform %}
+  Platform: {{ ci_platform|upper }}
+  {% endif %}
+  {% if job_name %}
+  Job: {{ job_name }}
+  {% endif %}
+  {% endblock %}
+  
+  {% block error_details %}
+  ## 🔍 Pipeline Error Details
+  
+  {% if pipeline_info %}
+  ### Pipeline Information:
+  - **Pipeline ID**: {{ pipeline_info.id }}
+  - **Branch**: {{ pipeline_info.branch|default('main') }}
+  - **Commit**: {{ pipeline_info.commit|default('HEAD')[:8] }}
+  - **Triggered By**: {{ pipeline_info.triggered_by|default('unknown') }}
+  - **Duration**: {{ pipeline_info.duration|default('N/A') }}
+  {% endif %}
+  
+  {% if stage_info %}
+  ### Failed Stage: `{{ stage_info.name }}`
+  - **Status**: {{ stage_info.status }}
+  - **Exit Code**: {{ stage_info.exit_code|default('N/A') }}
+  - **Duration**: {{ stage_info.duration|default('N/A') }}s
+  {% endif %}
+  
+  ### Error Output:
+  ```bash
+  {{ error_text }}
+  ```
+  
+  {% if build_log %}
+  ### Build Log (Last 50 lines):
+  ```
+  {{ build_log|truncate(2000) }}
+  ```
+  {% endif %}
+  {% endblock %}
+  
+  {% block analysis_content %}
+  1. **Pipeline Configuration Check** 📋
+     {% if ci_platform == 'github' %}
+     ```yaml
+     # Check workflow syntax
+     # .github/workflows/ci.yml
+     name: CI
+     on: [push, pull_request]
+     jobs:
+       test:
+         runs-on: ubuntu-latest
+         steps:
+           - uses: actions/checkout@v3
+           - name: Run tests
+             run: |
+               echo "Check syntax and indentation"
+     ```
+     {% elif ci_platform == 'gitlab' %}
+     ```yaml
+     # Check .gitlab-ci.yml syntax
+     stages:
+       - build
+       - test
+       - deploy
+     
+     test:
+       stage: test
+       script:
+         - echo "Check YAML syntax"
+     ```
+     {% endif %}
+  
+  2. **Environment & Dependencies** 🌍
+     ```bash
+     # Check runner environment
+     {% if ci_platform == 'github' %}
+     - name: Environment Info
+       run: |
+         echo "Runner OS: ${{ runner.os }}"
+         echo "Node: $(node --version)"
+         echo "Python: $(python --version)"
+     {% else %}
+     echo "OS: $(uname -a)"
+     echo "Available tools:"
+     which node python docker
+     {% endif %}
+     
+     # Verify dependencies
+     npm ci || npm install
+     pip install -r requirements.txt
+     bundle install
+     ```
+  
+  3. **Common Issues Analysis** 🔍
+     {% if 'permission denied' in error_text.lower() %}
+     ### Permission Issues:
+     - Check file permissions
+     - Verify runner user permissions
+     - Review Docker socket access
+     - Check secret/token permissions
+     {% elif 'not found' in error_text.lower() %}
+     ### Missing Dependencies:
+     - Verify all tools are installed
+     - Check PATH environment variable
+     - Ensure scripts are executable
+     - Validate working directory
+     {% elif 'timeout' in error_text.lower() %}
+     ### Timeout Issues:
+     - Review job timeout settings
+     - Identify slow operations
+     - Consider job parallelization
+     - Add progress indicators
+     {% endif %}
+  
+  4. **Secret & Credential Check** 🔐
+     ```yaml
+     # Verify secrets are configured
+     {% if ci_platform == 'github' %}
+     - name: Check Secrets
+       run: |
+         if [ -z "${{ secrets.API_KEY }}" ]; then
+           echo "API_KEY secret not set"
+           exit 1
+         fi
+     {% elif ci_platform == 'gitlab' %}
+     script:
+       - |
+         if [ -z "$CI_JOB_TOKEN" ]; then
+           echo "CI_JOB_TOKEN not available"
+           exit 1
+         fi
+     {% endif %}
+     ```
+  {% endblock %}
+  
+  {% block fix_content %}
+  ## 🔧 CI/CD Pipeline Fixes:
+  
+  {% if 'syntax error' in error_text.lower() or 'yaml' in error_text.lower() %}
+  ### Fixing YAML Syntax Errors:
+  ```yaml
+  # Common YAML fixes
+  
+  # Correct indentation (2 spaces)
+  jobs:
+    test:  # 2 spaces
+      runs-on: ubuntu-latest  # 4 spaces
+      steps:  # 4 spaces
+        - uses: actions/checkout@v3  # 6 spaces
+  
+  # Multi-line strings
+  script: |
+    echo "Line 1"
+    echo "Line 2"
+  
+  # Proper list syntax
+  env:
+    - name: VAR1
+      value: value1
+    - name: VAR2
+      value: value2
+  ```
+  {% endif %}
+  
+  {% if 'permission' in error_text.lower() %}
+  ### Fixing Permission Issues:
+  ```yaml
+  # GitHub Actions
+  - name: Make script executable
+    run: chmod +x ./scripts/deploy.sh
+  
+  - name: Fix Docker permissions
+    run: |
+      sudo usermod -aG docker $USER
+      sudo chmod 666 /var/run/docker.sock
+  
+  # GitLab CI
+  before_script:
+    - chmod +x ./scripts/*.sh
+    - docker info  # Verify Docker access
+  ```
+  {% endif %}
+  
+  {% if 'dependency' in error_text.lower() or 'not found' in error_text.lower() %}
+  ### Installing Missing Dependencies:
+  ```yaml
+  # GitHub Actions
+  - name: Setup Node.js
+    uses: actions/setup-node@v3
+    with:
+      node-version: '18'
+      cache: 'npm'
+  
+  - name: Setup Python
+    uses: actions/setup-python@v4
+    with:
+      python-version: '3.10'
+      cache: 'pip'
+  
+  # Generic installation
+  - name: Install dependencies
+    run: |
+      # Update package lists
+      sudo apt-get update
+      
+      # Install system dependencies
+      sudo apt-get install -y build-essential libssl-dev
+      
+      # Install language-specific deps
+      npm ci --prefer-offline --no-audit
+      pip install --no-cache-dir -r requirements.txt
+  ```
+  {% endif %}
+  
+  {% if 'test' in error_text.lower() and 'fail' in error_text.lower() %}
+  ### Handling Test Failures:
+  ```yaml
+  # Continue on test failure to see all results
+  - name: Run tests
+    continue-on-error: true
+    run: npm test
+  
+  # Upload test results
+  - name: Upload test results
+    if: always()
+    uses: actions/upload-artifact@v3
+    with:
+      name: test-results
+      path: |
+        coverage/
+        test-results/
+  
+  # Conditional deployment
+  deploy:
+    needs: test
+    if: success() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+  ```
+  {% endif %}
+  
+  ### Debugging CI/CD Issues:
+  ```yaml
+  # Enable debug mode
+  {% if ci_platform == 'github' %}
+  - name: Debug info
+    env:
+      ACTIONS_STEP_DEBUG: true
+    run: |
+      echo "Event: ${{ github.event_name }}"
+      echo "Ref: ${{ github.ref }}"
+      echo "SHA: ${{ github.sha }}"
+      env | sort
+  {% elif ci_platform == 'gitlab' %}
+  variables:
+    CI_DEBUG_TRACE: "true"
+  
+  script:
+    - echo "Job:$CI_JOB_NAME"
+    - echo "Stage:$CI_JOB_STAGE"
+    - env | grep CI_
+  {% endif %}
+  
+  # Add debugging steps
+  - name: List files
+    run: |
+      echo "Current directory:"
+      pwd
+      echo "Files:"
+      ls -la
+      echo "Git status:"
+      git status
+  ```
+  
+  ### Optimizing Pipeline Performance:
+  ```yaml
+  # Cache dependencies
+  {% if ci_platform == 'github' %}
+  - uses: actions/cache@v3
+    with:
+      path: |
+        ~/.npm
+        ~/.cache/pip
+      key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json', '**/requirements.txt') }}
+  {% elif ci_platform == 'gitlab' %}
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+      - .pip/
+  {% endif %}
+  
+  # Parallelize jobs
+  test:
+    strategy:
+      matrix:
+        node: [16, 18, 20]
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+  ```
+  {% endblock %}
+  
+  {% block prevention_content %}
+  - **Pipeline Validation** ✅
+    ```bash
+    # Validate before push
+    # GitHub Actions
+    act --dryrun  # Local testing with act
+    
+    # GitLab CI
+    gitlab-ci-lint .gitlab-ci.yml
+    
+    # CircleCI
+    circleci config validate
+    ```
+  
+  - **Implement Pipeline as Code Best Practices** 📋
+    ```yaml
+    # Reusable workflows (GitHub Actions)
+    jobs:
+      call-reusable:
+        uses: ./.github/workflows/reusable.yml
+        with:
+          environment: production
+        secrets: inherit
+    
+    # Templates (GitLab CI)
+    .test-template:
+      stage: test
+      script:
+        - npm test
+      retry: 2
+    
+    unit-tests:
+      extends: .test-template
+    ```
+  
+  - **Add Pipeline Monitoring** 📊
+    ```yaml
+    # Notifications
+    - name: Notify on failure
+      if: failure()
+      run: |
+        curl -X POST $SLACK_WEBHOOK \
+          -H 'Content-type: application/json' \
+          -d '{"text":"Pipeline failed: ${{ github.run_id }}"}'
+    
+    # Status badges
+    # Add to README.md
+    ![CI Status](https://github.com/user/repo/actions/workflows/ci.yml/badge.svg)
+    ```
+  
+  - **Security Scanning** 🔒
+    ```yaml
+    # Dependency scanning
+    - name: Security scan
+      run: |
+        npm audit --production
+        pip check
+        
+    # Secret scanning
+    - name: Detect secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+    ```
+  {% endblock %}
+  
+  {% block tips_content %}
+  - 💡 Use pipeline linting tools before committing
+  - 💡 Test pipelines locally when possible
+  - 💡 Keep pipeline configs DRY with templates/reusable workflows
+  - 💡 Use matrix builds for multi-environment testing
+  - 💡 Cache dependencies aggressively
+  - 💡 Set reasonable timeouts for all jobs
+  - 💡 Use artifacts for debugging failed builds
+  - 💡 Implement gradual rollouts for deployments
+  - 💡 Monitor pipeline metrics and optimize bottlenecks
+  - 💡 Document pipeline requirements and secrets
+  {% endblock %}

@@ -1,0 +1,58 @@
+{
+  "app.name": "ClaudeCode-Debugger",
+  "app.description": "為 Claude Code 生成智能調試提示",
+  
+  "cli.analyzing": "分析錯誤中...",
+  "cli.generating": "生成調試提示中...",
+  "cli.copied": "✓ 已複製到剪貼板！",
+  "cli.copy_failed": "✗ 複製到剪貼板失敗。",
+  "cli.saved": "✓ 已保存到 {file}",
+  "cli.save_failed": "✗ 保存失敗：{error}",
+  "cli.no_error": "錯誤：未提供錯誤內容。",
+  "cli.help_hint": "使用 --help 查看使用說明。",
+  "cli.reading_file_error": "讀取文件錯誤：{error}",
+  "cli.using_clipboard": "使用剪貼板內容...",
+  "cli.interactive_prompt": "輸入錯誤訊息（Ctrl+D 結束）：",
+  "cli.interactive_title": "ClaudeCode-Debugger 互動模式",
+  "cli.no_content": "未提供錯誤內容。",
+  "cli.copy_prompt": "複製到剪貼板？",
+  "cli.available_templates": "可用模板：",
+  "cli.template_count": "總計：{count} 個模板",
+  "cli.history_coming": "歷史記錄功能即將推出！",
+  
+  "error.title": "🚨 {type} 錯誤 - {severity} 優先級",
+  "error.summary": "錯誤摘要",
+  "error.count": "檢測到 {count} 個錯誤",
+  "error.files": "相關文件：",
+  "error.location": "錯誤位置：",
+  "error.line": "第 {line} 行",
+  "error.codes": "錯誤代碼：",
+  "error.details": "錯誤詳情",
+  "error.stack_trace": "堆疊追蹤分析",
+  
+  "debug.task": "🔍 調試任務",
+  "debug.analyze": "分析錯誤",
+  "debug.analyze_desc": "- 識別錯誤的根本原因\n- 檢查常見模式\n- 審查最近的更改\n- 確定影響範圍",
+  "debug.investigate": "調查步驟",
+  "debug.investigate_desc": "- 重現錯誤條件\n- 收集相關日誌\n- 檢查系統狀態\n- 驗證環境配置",
+  "debug.fix": "修復策略",
+  "debug.fix_desc": "- 應用適當的修復\n- 測試解決方案\n- 驗證無副作用\n- 記錄解決過程",
+  "debug.prevent": "預防措施",
+  "debug.prevent_desc": "- 添加測試以防止復發\n- 更新文檔\n- 考慮重構如需要\n- 實施監控",
+  
+  "tips.title": "💡 調試技巧",
+  "tips.content": "- 使用二分法定位問題\n- 檢查最近的提交\n- 查看相關日誌文件\n- 嘗試在不同環境重現\n- 諮詢團隊成員經驗",
+  
+  "info.title": "📝 需要更多信息",
+  "info.content": "為了提供更精確的幫助，請提供：\n- 完整的錯誤堆棧\n- 重現步驟\n- 環境信息\n- 最近的更改",
+  
+  "agent.recommendation": "🤖 推薦 Agent",
+  "agent.use": "使用 `{agent}` agent 來處理此錯誤",
+  
+  "analysis.details": "分析詳情：",
+  "analysis.error_type": "錯誤類型：{type}",
+  "analysis.severity": "嚴重程度：{severity}",
+  "analysis.files": "文件：{files}",
+  "analysis.error_codes": "錯誤代碼：{codes}",
+  "analysis.lines": "行號：{lines}"
+}

@@ -1,0 +1,71 @@
+name: JavaScript Runtime Error
+agent: debug-specialist
+version: "1.0.0"
+description: Template for JavaScript runtime errors
+template: |
+  🚨 JavaScript 運行時錯誤 - {{ severity|upper }} 優先級 Debug
+
+  ## 錯誤摘要
+  檢測到 JavaScript 運行時錯誤
+  {% if files %}
+  
+  ### 影響文件：
+  {{ affected_files }}
+  {% endif %}
+
+  ## 錯誤詳情
+  {% if error_codes %}
+  ### 錯誤類型：
+  {% for code in error_codes %}
+  - {{ code }}{% if code == 'TypeError' %}: 類型錯誤 - 通常是訪問 null/undefined 的屬性{% elif code == 'ReferenceError' %}: 引用錯誤 - 變量未定義{% elif code == 'SyntaxError' %}: 語法錯誤{% endif %}
+  {% endfor %}
+  {% endif %}
+
+  ### 錯誤信息：
+  ```javascript
+  {{ error_text }}
+  ```
+
+  ## 🔍 Debug 策略
+
+  1. **即時診斷**
+     {% if "Cannot read property" in error_text or "Cannot read properties" in error_text %}
+     - 對象為 null 或 undefined
+     - 添加空值檢查：`obj?.property` 或 `obj && obj.property`
+     - 設置默認值：`const value = obj?.property || defaultValue`
+     {% elif "is not a function" in error_text %}
+     - 檢查函數是否正確導入/定義
+     - 驗證調用時機（可能尚未初始化）
+     - 檢查 this 綁定問題
+     {% elif "is not defined" in error_text %}
+     - 變量在使用前未聲明
+     - 檢查拼寫錯誤
+     - 確認導入語句
+     {% endif %}
+
+  2. **防禦性編程**
+     - 實現空值檢查
+     - 使用 optional chaining (?.)
+     - 添加類型驗證
+     - 實現錯誤邊界 (React)
+
+  3. **調試技巧**
+     - 使用 console.log 追踪變量值
+     - 設置斷點進行步進調試
+     - 檢查異步操作的時序
+     - 驗證 API 響應結構
+
+  4. **長期改進**
+     - 考慮遷移到 TypeScript
+     - 實現更完善的錯誤處理
+     - 添加單元測試
+     - 使用 ESLint 進行靜態檢查
+
+  ## 💡 常見原因
+  - 異步數據尚未加載完成
+  - API 響應結構變化
+  - 組件生命週期問題
+  - 事件處理器的 this 綁定錯誤
+
+  ## 🤖 推薦 Agent
+  使用 `{{ recommended_agent }}` agent 來處理此類錯誤

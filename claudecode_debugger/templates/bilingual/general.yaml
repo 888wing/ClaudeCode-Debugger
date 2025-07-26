@@ -1,0 +1,149 @@
+name: General Error / 通用錯誤
+agent: general-purpose
+version: "2.0.0"
+description: Default bilingual template for unspecified error types
+languages:
+  en: English
+  zh: 中文
+template: |
+  🚨 {{ error_type_display }} Debug / 調試
+  
+  {% if lang == 'zh' %}
+  ## 錯誤摘要
+  檢測到 {{ error_count or 1 }} 個錯誤
+  {% if files %}
+  
+  ### 相關文件：
+  {{ affected_files }}
+  {% endif %}
+  
+  {% if line_numbers %}
+  ### 錯誤位置：
+  {% for line in line_numbers %}
+  - 第 {{ line }} 行
+  {% endfor %}
+  {% endif %}
+  
+  {% if error_codes %}
+  ### 錯誤代碼：
+  {% for code in error_codes %}
+  - {{ code }}
+  {% endfor %}
+  {% endif %}
+  
+  ## 錯誤詳情
+  ```
+  {{ error_text }}
+  ```
+  
+  ## 🔍 調試任務
+  
+  1. **分析錯誤**
+     - 識別錯誤的根本原因
+     - 檢查常見模式
+     - 審查最近的更改
+     - 確定影響範圍
+  
+  2. **調查步驟**
+     - 重現錯誤條件
+     - 收集相關日誌
+     - 檢查系統狀態
+     - 驗證環境配置
+  
+  3. **修復策略**
+     - 應用適當的修復
+     - 測試解決方案
+     - 驗證無副作用
+     - 記錄解決過程
+  
+  4. **預防措施**
+     - 添加測試以防止復發
+     - 更新文檔
+     - 考慮重構如需要
+     - 實施監控
+  
+  ## 💡 通用調試技巧
+  - 使用二分法定位問題
+  - 檢查最近的提交
+  - 查看相關日誌文件
+  - 嘗試在不同環境重現
+  - 諮詢團隊成員經驗
+  
+  ## 📝 需要更多信息
+  為了提供更精確的幫助，請提供：
+  - 完整的錯誤堆棧
+  - 重現步驟
+  - 環境信息
+  - 最近的更改
+  
+  {% else %}
+  ## Error Summary
+  Detected {{ error_count or 1 }} error(s)
+  {% if files %}
+  
+  ### Related Files:
+  {{ affected_files }}
+  {% endif %}
+  
+  {% if line_numbers %}
+  ### Error Location:
+  {% for line in line_numbers %}
+  - Line {{ line }}
+  {% endfor %}
+  {% endif %}
+  
+  {% if error_codes %}
+  ### Error Codes:
+  {% for code in error_codes %}
+  - {{ code }}
+  {% endfor %}
+  {% endif %}
+  
+  ## Error Details
+  ```
+  {{ error_text }}
+  ```
+  
+  ## 🔍 Debug Tasks
+  
+  1. **Analyze Error**
+     - Identify root cause
+     - Check common patterns
+     - Review recent changes
+     - Determine impact scope
+  
+  2. **Investigation Steps**
+     - Reproduce error conditions
+     - Collect relevant logs
+     - Check system state
+     - Verify environment config
+  
+  3. **Fix Strategy**
+     - Apply appropriate fix
+     - Test solution
+     - Verify no side effects
+     - Document resolution
+  
+  4. **Prevention Measures**
+     - Add tests to prevent recurrence
+     - Update documentation
+     - Consider refactoring if needed
+     - Implement monitoring
+  
+  ## 💡 General Debug Tips
+  - Use binary search to locate issues
+  - Check recent commits
+  - Review related log files
+  - Try reproducing in different environments
+  - Consult team member experiences
+  
+  ## 📝 Need More Information
+  For more precise help, please provide:
+  - Full error stack
+  - Reproduction steps
+  - Environment information
+  - Recent changes
+  {% endif %}
+  
+  ## 🤖 {{ agent_recommendation_text }}
+  {{ agent_use_text }} `{{ recommended_agent }}` agent

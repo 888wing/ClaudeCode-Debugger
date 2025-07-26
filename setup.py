@@ -47,8 +47,8 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "ccdebug=claudecode_debugger.cli:main",
-            "ccdebug-enhanced=claudecode_debugger.cli_enhanced:cli",
+            "ccdebug=claudecode_debugger.cli_new:cli",
+            "ccdebug-basic=claudecode_debugger.cli:main",
         ],
     },
     include_package_data=True,

@@ -1,0 +1,57 @@
+name: TypeScript Compilation Error
+agent: debug-specialist
+version: "1.0.0"
+description: Template for TypeScript compilation errors
+template: |
+  🚨 TypeScript 編譯錯誤 - {{ severity|upper }} 優先級 Debug
+
+  ## 錯誤摘要
+  檢測到 {{ error_count or 1 }} 個 TypeScript 錯誤
+  {% if files %}
+  
+  ### 影響文件：
+  {{ affected_files }}
+  {% endif %}
+
+  ## 錯誤詳情
+  {% if error_codes %}
+  ### 錯誤代碼：
+  {% for code in error_codes %}
+  - {{ code }}{% if code == 'TS2322' %}: Type mismatch - 類型不匹配{% elif code == 'TS2339' %}: Property does not exist - 屬性不存在{% elif code == 'TS2345' %}: Argument type mismatch - 參數類型不匹配{% endif %}
+  {% endfor %}
+  {% endif %}
+
+  ### 原始錯誤信息：
+  ```typescript
+  {{ error_text }}
+  ```
+
+  ## 🔍 分析任務
+
+  1. **類型安全分析**
+     - 檢查類型定義是否正確
+     - 查找隱式 any 的使用
+     - 驗證接口實現
+
+  2. **系統性修復方案**
+     - 提供完整的修復代碼
+     - 確保類型安全
+     - 避免使用 any 或類型斷言
+
+  3. **預防措施**
+     - 如何防止類似錯誤再次發生？
+     - 是否需要更新 tsconfig.json？
+     - 考慮添加更嚴格的類型檢查
+
+  4. **測試驗證**
+     - 修復後的測試步驟
+     - 確保不會引入新問題
+
+  ## 💡 快速修復提示
+  - 檢查是否缺少類型定義文件 (@types/*)
+  - 驗證 Prisma 或其他代碼生成器的類型是否最新
+  - 考慮使用類型守衛 (type guards)
+  - 檢查循環依賴問題
+
+  ## 🤖 推薦 Agent
+  使用 `{{ recommended_agent }}` agent 來處理此類錯誤

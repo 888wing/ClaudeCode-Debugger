@@ -1,0 +1,213 @@
+name: Advanced TypeScript Debug Template
+extends: base
+version: "2.0.0"
+description: Comprehensive TypeScript error debugging with framework support
+category: typescript
+agent: debug-specialist
+tags: [typescript, compilation, type-safety, react, vue, angular]
+language: typescript
+
+# TypeScript-specific variables
+variables:
+  ts_error_codes:
+    TS2322: "Type '{}' is not assignable to type '{}'"
+    TS2339: "Property '{}' does not exist on type '{}'"
+    TS2345: "Argument of type '{}' is not assignable to parameter of type '{}'"
+    TS2304: "Cannot find name '{}'"
+    TS2307: "Cannot find module '{}' or its corresponding type declarations"
+    TS2532: "Object is possibly 'undefined'"
+    TS2571: "Object is of type 'unknown'"
+    TS7006: "Parameter '{}' implicitly has an 'any' type"
+    TS2769: "No overload matches this call"
+  
+  frameworks:
+    react: ["jsx", "tsx", "hooks", "props", "state"]
+    vue: ["vue", "composition", "setup", "ref", "reactive"]
+    angular: ["ng", "component", "service", "module", "directive"]
+
+# Conditional includes based on error type
+includes:
+  - "{% if 'react' in error_text.lower() %}react_helpers{% endif %}"
+  - "{% if 'vue' in error_text.lower() %}vue_helpers{% endif %}"
+  - "{% if 'async' in error_text.lower() %}async_helpers{% endif %}"
+
+template: |
+  {% extends "base" %}
+  
+  {% block header %}
+  {{ super() }}
+  {% if framework_detected %}
+  🎯 Framework: {{ framework_detected|upper }}
+  {% endif %}
+  {% endblock %}
+  
+  {% block error_details %}
+  ## 🔍 Error Details
+  
+  {% if error_codes %}
+  ### Error Codes:
+  {% for code in error_codes %}
+  - **{{ format_error_code(code) }}**
+    {%- if code in ts_error_codes %}
+    - Pattern: `{{ ts_error_codes[code] }}`
+    - Common fixes: {{ suggest_fix('typescript', code)|join(', ') }}
+    {%- endif %}
+  {% endfor %}
+  {% endif %}
+  
+  ### Full Error:
+  ```typescript
+  {{ error_text }}
+  ```
+  
+  {% if stack_trace %}
+  ### Stack Trace:
+  ```
+  {{ format_stack_trace(stack_trace, 15) }}
+  ```
+  {% endif %}
+  {% endblock %}
+  
+  {% block analysis_content %}
+  1. **Type Safety Analysis** 🔍
+     - Check type definitions and interfaces
+     - Verify generic type parameters
+     - Look for implicit `any` usage
+     - Review type assertions and guards
+  
+  2. **Module Resolution** 📦
+     - Verify import paths are correct
+     - Check `tsconfig.json` paths configuration
+     - Ensure type definition packages (@types/*) are installed
+     - Look for circular dependencies
+  
+  3. **Framework-Specific Checks** 🎨
+     {% if 'react' in error_text.lower() %}
+     - Check React component prop types
+     - Verify hook usage rules
+     - Review JSX type definitions
+     {% elif 'vue' in error_text.lower() %}
+     - Check Vue composition API types
+     - Verify component props definitions
+     - Review template type inference
+     {% elif 'angular' in error_text.lower() %}
+     - Check Angular decorator types
+     - Verify service injection types
+     - Review template type checking
+     {% endif %}
+  
+  4. **Async/Promise Types** ⚡
+     - Check Promise return types
+     - Verify async/await usage
+     - Look for unhandled promise rejections
+  {% endblock %}
+  
+  {% block fix_content %}
+  {% if error_codes %}
+  ## 🔧 Specific Fixes for Detected Errors:
+  
+  {% for code in error_codes %}
+  {% if code == 'TS2322' %}
+  ### Fixing Type Assignment Error ({{ code }}):
+  ```typescript
+  // Option 1: Fix the type mismatch
+  const value: CorrectType = correctValue;
+  
+  // Option 2: Use type assertion (if you're sure)
+  const value = someValue as ExpectedType;
+  
+  // Option 3: Update the target type
+  interface UpdatedInterface {
+    property: ActualType;
+  }
+  ```
+  
+  {% elif code == 'TS2339' %}
+  ### Fixing Missing Property Error ({{ code }}):
+  ```typescript
+  // Option 1: Add the property to the interface
+  interface MyInterface {
+    existingProp: string;
+    newProp?: string; // Add as optional
+  }
+  
+  // Option 2: Use type guard
+  if ('property' in object) {
+    // Safe to access object.property
+  }
+  
+  // Option 3: Use optional chaining
+  const value = object?.property;
+  ```
+  
+  {% elif code == 'TS2345' %}
+  ### Fixing Argument Type Error ({{ code }}):
+  ```typescript
+  // Option 1: Convert the argument
+  function myFunc(param: string) { }
+  myFunc(String(value)); // Convert to string
+  
+  // Option 2: Update function signature
+  function myFunc(param: string | number) { }
+  
+  // Option 3: Use overloads
+  function myFunc(param: string): void;
+  function myFunc(param: number): void;
+  function myFunc(param: string | number): void { }
+  ```
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+  
+  ## 📋 General Fix Checklist:
+  1. ✅ Update type definitions to match actual usage
+  2. ✅ Install missing @types packages
+  3. ✅ Configure tsconfig.json properly
+  4. ✅ Remove unnecessary type assertions
+  5. ✅ Enable strict mode gradually
+  {% endblock %}
+  
+  {% block prevention_content %}
+  - **Enable TypeScript Strict Mode** 🔒
+    ```json
+    {
+      "compilerOptions": {
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true
+      }
+    }
+    ```
+  
+  - **Use ESLint with TypeScript** 📏
+    ```bash
+    npm install --save-dev @typescript-eslint/parser @typescript-eslint/eslint-plugin
+    ```
+  
+  - **Add Pre-commit Hooks** 🪝
+    ```json
+    {
+      "husky": {
+        "hooks": {
+          "pre-commit": "tsc --noEmit && lint-staged"
+        }
+      }
+    }
+    ```
+  
+  - **Write Type Tests** 🧪
+    ```typescript
+    // type-tests.ts
+    import { expectType } from 'tsd';
+    expectType<string>(myFunction());
+    ```
+  {% endblock %}
+  
+  {% block tips_content %}
+  - 💡 Use `--strict` flag to catch more errors early
+  - 💡 Install `@types/*` packages for all dependencies
+  - 💡 Use VS Code for real-time type checking
+  - 💡 Run `tsc --noEmit` in CI/CD pipeline
+  - 💡 Consider using `ts-migrate` for large migrations
+  - 💡 Enable `"checkJs": true` for gradual migration
+  {% endblock %}

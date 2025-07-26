@@ -1,0 +1,58 @@
+{
+  "app.name": "ClaudeCode-Debugger",
+  "app.description": "Smart debug prompt generator for Claude Code",
+  
+  "cli.analyzing": "Analyzing error...",
+  "cli.generating": "Generating debug prompt...",
+  "cli.copied": "✓ Copied to clipboard!",
+  "cli.copy_failed": "✗ Failed to copy to clipboard.",
+  "cli.saved": "✓ Saved to {file}",
+  "cli.save_failed": "✗ Failed to save: {error}",
+  "cli.no_error": "Error: No error content provided.",
+  "cli.help_hint": "Use --help for usage information.",
+  "cli.reading_file_error": "Error reading file: {error}",
+  "cli.using_clipboard": "Using content from clipboard...",
+  "cli.interactive_prompt": "Enter your error message (Ctrl+D to finish):",
+  "cli.interactive_title": "ClaudeCode-Debugger Interactive Mode",
+  "cli.no_content": "No error content provided.",
+  "cli.copy_prompt": "Copy to clipboard?",
+  "cli.available_templates": "Available Templates:",
+  "cli.template_count": "Total: {count} templates",
+  "cli.history_coming": "History feature coming soon!",
+  
+  "error.title": "🚨 {type} Error - {severity} Priority",
+  "error.summary": "Error Summary",
+  "error.count": "Detected {count} error(s)",
+  "error.files": "Related Files:",
+  "error.location": "Error Location:",
+  "error.line": "Line {line}",
+  "error.codes": "Error Codes:",
+  "error.details": "Error Details",
+  "error.stack_trace": "Stack Trace Analysis",
+  
+  "debug.task": "🔍 Debug Tasks",
+  "debug.analyze": "Analyze Error",
+  "debug.analyze_desc": "- Identify root cause\n- Check common patterns\n- Review recent changes\n- Determine impact scope",
+  "debug.investigate": "Investigation Steps",
+  "debug.investigate_desc": "- Reproduce error conditions\n- Collect relevant logs\n- Check system state\n- Verify environment config",
+  "debug.fix": "Fix Strategy",
+  "debug.fix_desc": "- Apply appropriate fix\n- Test solution\n- Verify no side effects\n- Document resolution",
+  "debug.prevent": "Prevention Measures",
+  "debug.prevent_desc": "- Add tests to prevent recurrence\n- Update documentation\n- Consider refactoring if needed\n- Implement monitoring",
+  
+  "tips.title": "💡 Debug Tips",
+  "tips.content": "- Use binary search to locate issues\n- Check recent commits\n- Review related log files\n- Try reproducing in different environments\n- Consult team member experiences",
+  
+  "info.title": "📝 Need More Information",
+  "info.content": "For more precise help, please provide:\n- Full error stack\n- Reproduction steps\n- Environment information\n- Recent changes",
+  
+  "agent.recommendation": "🤖 Recommended Agent",
+  "agent.use": "Use `{agent}` agent to handle this error",
+  
+  "analysis.details": "Analysis Details:",
+  "analysis.error_type": "Error Type: {type}",
+  "analysis.severity": "Severity: {severity}",
+  "analysis.files": "Files: {files}",
+  "analysis.error_codes": "Error Codes: {codes}",
+  "analysis.lines": "Lines: {lines}"
+}

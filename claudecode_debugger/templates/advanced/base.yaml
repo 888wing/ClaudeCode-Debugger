@@ -1,0 +1,110 @@
+name: Base Debug Template
+version: "2.0.0"
+description: Base template with common debug structure
+category: base
+tags: [base, foundation]
+
+# Variables that child templates can override
+variables:
+  severity_levels:
+    critical: "🚨 CRITICAL"
+    error: "🔴 ERROR"
+    warning: "🟡 WARNING"
+    info: "🔵 INFO"
+  
+  common_sections:
+    - error_summary
+    - affected_files
+    - error_details
+    - analysis_tasks
+    - fix_strategy
+    - prevention
+    - quick_tips
+
+# Macros for reusable components
+macros:
+  error_header: |
+    {% macro error_header(title, severity='error') -%}
+    {{ severity_levels[severity] }} {{ title }}
+    ═══════════════════════════════════════════════════════════════
+    {%- endmacro %}
+  
+  file_list: |
+    {% macro file_list(files, title='Affected Files') -%}
+    {% if files %}
+    ### {{ title }}:
+    {% for file in files %}
+    {{ file_icon(file) }} `{{ file }}`
+    {%- endfor %}
+    {% endif %}
+    {%- endmacro %}
+  
+  error_location: |
+    {% macro error_location(file, line, column=None) -%}
+    📍 Location: `{{ file }}:{{ line }}{% if column %}:{{ column }}{% endif %}`
+    {%- endmacro %}
+
+template: |
+  {% block header %}
+  {{ error_header(error_type_display, severity|default('error')) }}
+  {% endblock %}
+  
+  {% block summary %}
+  ## 📊 Error Summary
+  - **Type**: {{ error_type_display }}
+  - **Count**: {{ error_count|default(1) }} {{ 'error' if error_count == 1 else 'errors' }}
+  - **Severity**: {{ severity|default('error')|upper }}
+  - **Time**: {{ now().strftime('%Y-%m-%d %H:%M:%S') }}
+  {% endblock %}
+  
+  {% block affected_files %}
+  {{ file_list(files) }}
+  {% endblock %}
+  
+  {% block error_details %}
+  ## 🔍 Error Details
+  ```{{ language|default('text') }}
+  {{ error_text }}
+  ```
+  {% endblock %}
+  
+  {% block analysis %}
+  ## 🧪 Analysis Tasks
+  {% block analysis_content %}
+  1. Identify root cause
+  2. Check for patterns
+  3. Review recent changes
+  {% endblock %}
+  {% endblock %}
+  
+  {% block fix_strategy %}
+  ## 🛠️ Fix Strategy
+  {% block fix_content %}
+  1. Apply appropriate fixes
+  2. Test the solution
+  3. Verify no side effects
+  {% endblock %}
+  {% endblock %}
+  
+  {% block prevention %}
+  ## 🛡️ Prevention
+  {% block prevention_content %}
+  - Add tests to prevent recurrence
+  - Update documentation
+  - Consider refactoring if needed
+  {% endblock %}
+  {% endblock %}
+  
+  {% block quick_tips %}
+  ## 💡 Quick Tips
+  {% block tips_content %}
+  - Use version control to track changes
+  - Test in isolated environment first
+  - Document the fix for future reference
+  {% endblock %}
+  {% endblock %}
+  
+  {% block agent_recommendation %}
+  ## 🤖 Recommended Agent
+  Use `{{ recommended_agent }}` for this type of error.
+  {% endblock %}
