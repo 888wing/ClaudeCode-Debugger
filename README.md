@@ -1,4 +1,4 @@
-# ClaudeCode-Debugger
+# ClaudeCode-Debugger 🚀
 
 [![CI](https://github.com/888wing/ClaudeCode-Debugger/workflows/CI/badge.svg)](https://github.com/888wing/ClaudeCode-Debugger/actions)
 [![Coverage](https://codecov.io/gh/888wing/ClaudeCode-Debugger/branch/main/graph/badge.svg)](https://codecov.io/gh/888wing/ClaudeCode-Debugger)
@@ -6,148 +6,309 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/claudecode-debugger.svg)](https://pypi.org/project/claudecode-debugger/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Smart debug prompt generator for Claude Code - Transform error messages into actionable debug prompts with AI-powered analysis.
+Intelligent debugging assistant for Claude Code - Transform error messages into actionable solutions with advanced AI-powered analysis, multi-language support, and seamless Claude Code integration.
 
 ## ✨ Features
 
-- 🔍 **Automatic Error Detection** - Intelligently identifies error types across multiple programming languages
-- 🤖 **Smart Agent Selection** - Automatically selects the optimal Claude Code agent for each error type
-- 📋 **One-Click Copy** - Instantly copy generated prompts to clipboard for quick debugging
-- 🎨 **Beautiful Output** - Rich, colorful terminal output for better readability
-- 📊 **Error Analysis** - Provides severity assessment and estimated fix time
-- 🔧 **Extensible Templates** - Customize prompts with YAML templates for your specific needs
-- 📈 **Learning System** - Improves suggestions based on historical solutions
+- 🌍 **Multi-Language Support** - Full i18n with Chinese (中文) and English interface
+- 🧠 **Advanced Error Analysis** - Three intelligent analyzers: Stack Trace, Pattern, and Code Context
+- 🎯 **ML-Ready Suggestion Engine** - Confidence-scored solutions based on error patterns
+- 🔍 **Deep Stack Trace Analysis** - Support for Python, JavaScript, TypeScript, Java, Ruby, Go
+- 🤖 **Claude Code Integration** - Native `/ccdebug` slash command for seamless workflow
+- 📋 **Smart Clipboard Integration** - Auto-detect and analyze errors from clipboard
+- 🎨 **Beautiful Terminal UI** - Rich, colorful output with progress indicators
+- 📊 **Intelligent Error Patterns** - Pre-configured patterns for common errors
+- 🔧 **Extensible Architecture** - Plugin system for custom analyzers and patterns
+- 📈 **Learning System** - Improves suggestions based on successful resolutions
 
 ## 🚀 Quick Start
 
 ### Installation
 
 ```bash
-pip install claudecode-debugger
+# Install from source
+git clone https://github.com/888wing/ClaudeCode-Debugger.git
+cd ClaudeCode-Debugger
+pip install -e .
+
+# Install Claude Code integration
+./install_claude_integration.sh
+source ~/.zshrc  # or ~/.bashrc
 ```
 
 ### Basic Usage
 
 ```bash
-# Analyze error from command line
-ccdebug "TypeError: Cannot read property 'name' of undefined"
+# Analyze error with Chinese interface
+ccdebug "TypeError: Cannot read property 'name' of undefined" --lang zh
 
-# Read error from file
-ccdebug -f error.log
+# Deep analysis with suggestions
+ccdebug "AttributeError: 'NoneType' object" --analyze-stack --suggest
 
-# Copy to clipboard automatically
-ccdebug -c
+# Read from clipboard
+ccdebug -c --lang zh
 
 # Interactive mode
 ccdebug -i
+
+# Claude Code integration
+# In Claude Code, when you encounter an error:
+/ccdebug --last --zh --deep
+```
+
+### Language Support
+
+```bash
+# Chinese interface (中文界面)
+cczh "錯誤信息"  # Quick Chinese analysis
+ccfull           # Full analysis in Chinese
+
+# English interface
+ccen "error message"  # Quick English analysis
+ccdebug --lang en    # Explicit English
 ```
 
 ## 📖 Examples
 
-### TypeScript Error
+### Python AttributeError (Chinese)
 
 ```bash
-$ ccdebug "TS2322: Type 'string' is not assignable to type 'number'"
+$ ccdebug "AttributeError: 'NoneType' object has no attribute 'profile'" --lang zh --suggest
 
-🚨 TypeScript Compilation Error - HIGH Priority Debug
+🚨 Python 錯誤 - HIGH 優先級
+檢測到: AttributeError - NoneType 錯誤
 
-## Error Summary
-Detected 1 error(s) affecting:
-- Unknown file
+📊 堆疊追蹤分析:
+- 根本原因: 嘗試訪問 None 對象的屬性
+- 影響範圍: 1 個文件受影響
 
-## TypeScript Compilation Analysis
+🎯 智能建議 (信心度: 85%):
+1. 添加 None 檢查:
+   ```python
+   if user and hasattr(user, 'profile'):
+       return user.profile.avatar_url
+   return None
+   ```
 
-### Error Codes Detected:
-- TS2322: Type mismatch error
+2. 使用 getattr 安全訪問:
+   ```python
+   profile = getattr(user, 'profile', None)
+   if profile:
+       return profile.avatar_url
+   ```
 
-### Debug Tasks
-1. **Type Safety Analysis**
-   - Review type definitions
-   - Check for implicit any usage
-   - Validate interface implementations
+3. 使用 try-except 處理:
+   ```python
+   try:
+       return user.profile.avatar_url
+   except AttributeError:
+       return None
+   ```
 
-2. **Fix Strategy**
-   - Update variable type annotation
-   - Convert value to expected type
-   - Add type guards if needed
-
-[✓ Copied to clipboard!]
+✅ 已複製到剪貼板
 ```
 
-### Python Exception
+### JavaScript TypeError with Code Context
 
 ```bash
-$ ccdebug -f traceback.log
+$ ccdebug --last --lang en --analyze-stack --suggest
 
-🚨 Python Exception - CRITICAL Priority Debug
+🚨 JavaScript Error - HIGH Priority
+TypeError: Cannot read property 'map' of undefined
 
-## Error Summary
-Detected Python exception in:
-- app.py (line 42)
+🔍 Stack Trace Analysis:
+┌─────────────────────────────────────────┐
+│ at TodoList (TodoList.jsx:15:19)       │
+│ at renderWithHooks (react-dom.js:14985)│
+│ at mountComponent (react-dom.js:17441) │
+└─────────────────────────────────────────┘
 
-## Exception Details
-ImportError: No module named 'requests'
+📊 Pattern Analysis:
+- Error Pattern: undefined_property_access
+- Common in: React component props
+- Severity: HIGH
 
-## Debug Tasks
-1. **Dependency Check**
-   - Verify package installation
-   - Check virtual environment
-   
-2. **Fix Strategy**
-   - pip install requests
-   - Update requirements.txt
+🎯 Suggestions (Confidence: 92%):
+1. Add default props:
+   ```javascript
+   function TodoList({ todos = [] }) {
+     return <ul>{todos.map(todo => <li>{todo.text}</li>)}</ul>
+   }
+   ```
 
-[✓ Saved to debug-prompt.md]
+2. Add conditional rendering:
+   ```javascript
+   function TodoList({ todos }) {
+     if (!todos || !Array.isArray(todos)) {
+       return <div>No todos available</div>
+     }
+     return <ul>{todos.map(todo => <li>{todo.text}</li>)}</ul>
+   }
+   ```
+
+3. Use optional chaining:
+   ```javascript
+   return <ul>{todos?.map(todo => <li>{todo.text}</li>) || null}</ul>
+   ```
+
+[✓ Analysis complete]
+```
+
+### Claude Code Integration
+
+```bash
+# In Claude Code, when you encounter an error:
+User: python manage.py runserver
+Claude: [Shows Django error]
+
+User: /ccdebug --last --zh --deep
+Claude: 
+🚨 Django 錯誤分析
+檢測到: ImproperlyConfigured
+
+🔍 深度分析:
+- 錯誤位置: settings.py:89
+- 根本原因: DATABASES 配置缺失
+- 影響: 應用程序無法啟動
+
+🎯 解決方案:
+1. 檢查 settings.py 中的 DATABASES 配置
+2. 確保環境變數正確設置
+3. 驗證數據庫連接參數
+
+[詳細步驟和代碼示例...]
 ```
 
 ## 🛠️ Advanced Features
 
-### Custom Templates
+### Intelligent Analyzers
 
-Create your own debug templates in `~/.ccdebug/templates/`:
+CCDebugger includes three advanced analyzers:
 
-```yaml
-# custom_error.yaml
-name: Custom Error Template
-agent: debug-specialist
-template: |
-  ## Custom Error Analysis
-  Error: {error_type}
-  Files: {affected_files}
-  
-  ## Your Custom Sections
-  {custom_analysis}
+```python
+# Stack Trace Analyzer - Multi-language support
+from claudecode_debugger.analyzers import StackTraceAnalyzer
+
+analyzer = StackTraceAnalyzer()
+result = analyzer.analyze(error_text)
+# Returns: language, frames, root_cause, error_type
+
+# Pattern Analyzer - Detects common error patterns
+from claudecode_debugger.analyzers import PatternAnalyzer
+
+analyzer = PatternAnalyzer()
+patterns = analyzer.analyze(error_text)
+# Returns: matched patterns with solutions
+
+# Code Context Analyzer - Extracts code context
+from claudecode_debugger.analyzers import CodeContextAnalyzer
+
+analyzer = CodeContextAnalyzer()
+context = analyzer.extract_context("app.py", line_number=42)
+# Returns: code snippet with surrounding lines
+```
+
+### ML-Ready Suggestion Engine
+
+```python
+from claudecode_debugger.suggestions import SuggestionEngine
+
+engine = SuggestionEngine()
+suggestions = engine.generate_suggestions(
+    error_type="AttributeError",
+    error_patterns=["null_reference"],
+    stack_trace_info=stack_info
+)
+# Returns: Ranked suggestions with confidence scores
 ```
 
 ### Configuration
 
-Configure defaults in `~/.ccdebugrc.yaml`:
+Create `~/.ccdebugrc` for personal preferences:
 
-```yaml
-preferences:
-  auto_copy: true
-  output_format: markdown
-  default_agent: debug-specialist
-  
-agents:
-  typescript: debug-specialist
-  python: backend-system-architect
-  memory: performance-specialist
+```json
+{
+  "defaultLanguage": "zh",
+  "defaultMode": "deep",
+  "autoSuggest": true,
+  "copyToClipboard": true,
+  "contextLines": 10,
+  "favoriteFrameworks": ["django", "react", "vue"],
+  "customPatterns": {
+    "myapp": {
+      "errorPattern": "MyAppError:",
+      "suggestion": "Check MyApp configuration"
+    }
+  }
+}
 ```
 
-### Plugin System
+### Claude Code Integration
 
-Extend functionality with plugins:
+The `/ccdebug` command seamlessly integrates with Claude Code:
+
+```bash
+# Auto-detection and analysis
+/ccdebug --last --zh
+
+# Different analysis modes
+/ccdebug --quick   # Fast analysis
+/ccdebug --deep    # Detailed analysis with suggestions
+/ccdebug --full    # Complete analysis with code context
+
+# Batch processing
+/ccdebug --batch --dir logs/
+
+# Watch mode
+/ccdebug --watch server.log
+```
+
+### Custom Error Patterns
+
+Add your own error patterns:
 
 ```python
-from claudecode_debugger.plugins import Plugin
+from claudecode_debugger.analyzers.pattern import ErrorPattern
 
-class GitContextPlugin(Plugin):
-    def enhance_prompt(self, prompt_data):
-        # Add git context to prompts
-        prompt_data['git_info'] = self.get_git_context()
-        return prompt_data
+custom_pattern = ErrorPattern(
+    name="custom_api_error",
+    pattern=r"API Error: (\d+)",
+    description="Custom API error",
+    category="api",
+    severity="high",
+    common_causes=["Invalid API key", "Rate limit exceeded"],
+    solutions=["Check API credentials", "Implement retry logic"]
+)
 ```
+
+## 🏗️ Architecture
+
+CCDebugger is built with a modular, extensible architecture:
+
+```
+claudecode_debugger/
+├── analyzers/           # Intelligent error analyzers
+│   ├── stack_trace.py   # Multi-language stack trace analysis
+│   ├── pattern.py       # Error pattern detection
+│   └── code_context.py  # Code context extraction
+├── suggestions/         # ML-ready suggestion engine
+│   └── engine.py        # Confidence-scored solutions
+├── i18n/               # Internationalization
+│   ├── translator.py    # Translation engine
+│   └── messages/        # Language files (en, zh)
+├── formatters/         # Output formatters
+│   ├── console.py      # Rich terminal output
+│   └── markdown.py     # Markdown formatting
+└── cli_new.py          # Enhanced CLI with full features
+```
+
+### Key Components
+
+1. **I18n System**: Full internationalization with automatic language detection
+2. **Analyzer Framework**: Pluggable analyzers for different error types
+3. **Suggestion Engine**: Knowledge base with confidence scoring
+4. **Claude Code Integration**: Native slash command support
+5. **Rich UI**: Beautiful terminal output with progress indicators
 
 ## 🤝 Contributing
 
@@ -182,7 +343,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📬 Support
 
-- 📖 [Documentation](https://claudecode-debugger.readthedocs.io)
+- 📖 [Claude Code Integration Guide](CLAUDE_CODE_GUIDE.md)
+- 🎯 [/ccdebug Command Reference](CLAUDE_CCDEBUG_COMMAND.md)
+- 📚 [Real-World Examples](CLAUDE_CCDEBUG_EXAMPLES.md)
 - 🐛 [Issue Tracker](https://github.com/888wing/ClaudeCode-Debugger/issues)
 - 💬 [Discussions](https://github.com/888wing/ClaudeCode-Debugger/discussions)
 - 🔔 [Changelog](CHANGELOG.md)
+
+## 🌟 What's New
+
+### v2.0.0 - Major Update
+- 🌍 Full internationalization (i18n) with Chinese and English support
+- 🧠 Three new intelligent analyzers for deep error analysis
+- 🎯 ML-ready suggestion engine with confidence scoring
+- 🤖 Native Claude Code integration with `/ccdebug` command
+- 📊 Advanced error pattern detection
+- 🔍 Multi-language stack trace analysis (Python, JS, TS, Java, Ruby, Go)
+- ✨ Complete architectural overhaul for extensibility
