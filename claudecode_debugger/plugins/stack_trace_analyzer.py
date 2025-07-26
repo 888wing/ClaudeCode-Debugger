@@ -1,7 +1,7 @@
 """Stack trace analyzer plugin for ClaudeCode-Debugger."""
 
 import re
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 from .base import Plugin
 
 

@@ -1,7 +1,7 @@
 """Generate training data for the ML classifier."""
 
 import random
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from .ml_classifier import TrainingExample
 from .advanced_detector import ErrorCategory
 

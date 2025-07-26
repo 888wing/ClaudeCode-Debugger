@@ -3,7 +3,7 @@
 import json
 import configparser
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from rich.theme import Theme
 
 
