@@ -5,16 +5,16 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="claudecode-debugger",
-    version="0.1.0",
+    version="1.1.0",
     author="888wing",
     author_email="",
-    description="Smart debug prompt generator for Claude Code",
+    description="AI-powered debugging assistant with seamless Claude Code integration",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/888wing/ClaudeCode-Debugger",
     packages=find_packages(),
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Debuggers",
         "License :: OSI Approved :: MIT License",
@@ -32,6 +32,8 @@ setup(
         "rich>=13.0",
         "markdown>=3.0",
         "pygments>=2.0",
+        "jinja2>=3.0",
+        "watchdog>=3.0",
     ],
     extras_require={
         "dev": [
@@ -53,6 +55,11 @@ setup(
     },
     include_package_data=True,
     package_data={
-        "claudecode_debugger": ["templates/*.yaml"],
+        "claudecode_debugger": [
+            "templates/*.yaml",
+            "templates/advanced/*.yaml",
+            "templates/bilingual/*.yaml",
+            "i18n/*.json",
+        ],
     },
 )

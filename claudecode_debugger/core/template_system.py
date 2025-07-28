@@ -97,11 +97,7 @@ class AdvancedTemplateSystem:
         if user_dir.exists():
             self.template_dirs.append(user_dir)
 
-        # Add advanced templates
-        advanced_dir = Path(__file__).parent.parent / "templates" / "advanced"
-        if not advanced_dir.exists():
-            advanced_dir.mkdir(parents=True, exist_ok=True)
-        self.template_dirs.append(advanced_dir)
+        # Note: Don't add advanced templates separately as they're already under builtin_dir
 
         # Initialize components
         self.cache = TemplateCache()
@@ -120,13 +116,22 @@ class AdvancedTemplateSystem:
 
     def _init_jinja_env(self):
         """Initialize Jinja2 environment with custom features."""
+        from jinja2 import DictLoader, ChoiceLoader
+        
+        # Create a composite loader that can load from both files and dict
+        file_loader = FileSystemLoader([str(d) for d in self.template_dirs])
+        dict_loader = DictLoader({})  # Will be populated dynamically
+        
         self.env = Environment(
-            loader=FileSystemLoader([str(d) for d in self.template_dirs]),
+            loader=ChoiceLoader([dict_loader, file_loader]),
             trim_blocks=True,
             lstrip_blocks=True,
             autoescape=select_autoescape(["html", "xml"]),
             extensions=["jinja2.ext.do", "jinja2.ext.loopcontrols"],
         )
+        
+        # Store reference to dict loader for dynamic template registration
+        self._dict_loader = dict_loader
 
         # Add custom filters
         self._add_custom_filters()
@@ -462,8 +467,55 @@ class AdvancedTemplateSystem:
         if not template_data:
             raise TemplateNotFound(name)
 
+        # Register all parent templates in the inheritance chain
+        current_name = name
+        while current_name and current_name in self.templates:
+            current_template = self.templates[current_name]
+            if "extends" in current_template:
+                parent_name = current_template["extends"]
+                parent_data = self._resolve_template(parent_name)
+                if parent_data:
+                    # Register parent template with its macros and variables
+                    parent_content = ""
+                    
+                    # Add macros
+                    if "macros" in parent_data:
+                        for macro_name, macro_content in parent_data["macros"].items():
+                            parent_content += f"\n{macro_content}\n"
+                    
+                    # Add variables
+                    if "variables" in parent_data:
+                        for var_name, var_value in parent_data["variables"].items():
+                            self.env.globals[var_name] = var_value
+                    
+                    # Add template content
+                    parent_content += parent_data.get("template", "")
+                    
+                    # Register in dict loader
+                    self._dict_loader.mapping[parent_name] = parent_content
+                    
+                current_name = parent_name if "extends" in current_template else None
+            else:
+                break
+
+        # Register macros from template data if available
+        if "macros" in template_data:
+            macros = template_data["macros"]
+            macro_template = ""
+            for macro_name, macro_content in macros.items():
+                macro_template += f"\n{macro_content}\n"
+            
+            # Add macros to the beginning of the template
+            template_str = macro_template + "\n" + template_data.get("template", "")
+        else:
+            template_str = template_data.get("template", "")
+            
+        # Also add variables to template context
+        if "variables" in template_data:
+            for var_name, var_value in template_data["variables"].items():
+                self.env.globals[var_name] = var_value
+        
         # Compile template
-        template_str = template_data.get("template", "")
         template = self.env.from_string(template_str)
 
         # Cache compiled template
@@ -497,16 +549,9 @@ class AdvancedTemplateSystem:
 
                 # Merge template strings
                 if "template" in parent and "template" in resolved:
-                    # Use Jinja2 template inheritance
-                    parent_template = f"{{% raw %}}{parent['template']}{{% endraw %}}"
-                    child_template = resolved["template"]
-
-                    merged[
-                        "template"
-                    ] = f"""
-{{% extends "{parent_name}_base" %}}
-{child_template}
-"""
+                    # Keep the child template as-is since it uses {% extends "base" %}
+                    # The Jinja2 inheritance will handle the merging
+                    merged["template"] = resolved["template"]
 
                 resolved = merged
 

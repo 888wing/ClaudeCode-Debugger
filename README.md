@@ -1,12 +1,21 @@
 # ClaudeCode-Debugger 🚀
 
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/888wing/ClaudeCode-Debugger/releases)
 [![CI](https://github.com/888wing/ClaudeCode-Debugger/workflows/CI/badge.svg)](https://github.com/888wing/ClaudeCode-Debugger/actions)
 [![Coverage](https://codecov.io/gh/888wing/ClaudeCode-Debugger/branch/main/graph/badge.svg)](https://codecov.io/gh/888wing/ClaudeCode-Debugger)
 [![PyPI](https://img.shields.io/pypi/v/claudecode-debugger.svg)](https://pypi.org/project/claudecode-debugger/)
 [![Python Version](https://img.shields.io/pypi/pyversions/claudecode-debugger.svg)](https://pypi.org/project/claudecode-debugger/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Intelligent debugging assistant for Claude Code - Transform error messages into actionable solutions with advanced AI-powered analysis, multi-language support, and seamless Claude Code integration.
+**AI-powered debugging assistant with seamless Claude Code integration** - Transform error messages into actionable solutions with advanced AI analysis, multi-language support, and native Claude Code commands. Let AI understand your bugs instantly!
+
+## 🆕 What's New in v1.1.0
+
+- **🤖 Native Claude Code Integration** - Seamless error detection and analysis within Claude Code
+- **⚡ Real-time Monitoring** - Continuous error monitoring with automatic analysis
+- **📝 Enhanced Templates** - Advanced Jinja2 template system with inheritance support
+- **🔧 Smart Configuration** - Flexible JSON-based configuration system
+- **📊 Error History** - Automatic error tracking and history management
 
 ## ✨ Features
 
@@ -20,6 +29,8 @@ Intelligent debugging assistant for Claude Code - Transform error messages into 
 - 📊 **Intelligent Error Patterns** - Pre-configured patterns for common errors
 - 🔧 **Extensible Architecture** - Plugin system for custom analyzers and patterns
 - 📈 **Learning System** - Improves suggestions based on successful resolutions
+- 🚀 **Performance Optimized** - Direct Python API for faster analysis
+- 🔒 **Secure by Default** - Safe error handling without exposing sensitive data
 
 ## 🚀 Quick Start
 
@@ -31,9 +42,8 @@ git clone https://github.com/888wing/ClaudeCode-Debugger.git
 cd ClaudeCode-Debugger
 pip install -e .
 
-# Install Claude Code integration
-./install_claude_integration.sh
-source ~/.zshrc  # or ~/.bashrc
+# Setup Claude Code integration (NEW!)
+python setup_claude_code.py
 ```
 
 ### Basic Usage
@@ -67,6 +77,60 @@ ccfull           # Full analysis in Chinese
 ccen "error message"  # Quick English analysis
 ccdebug --lang en    # Explicit English
 ```
+
+## 🤖 Claude Code Integration (NEW!)
+
+CCDebugger now seamlessly integrates with Claude Code! Errors are automatically detected and analyzed without any manual intervention.
+
+### Automatic Error Detection
+
+When you run commands in Claude Code that produce errors, CCDebugger automatically:
+- Detects error patterns in real-time
+- Extracts error context and stack traces
+- Generates AI-powered debugging suggestions
+- Provides instant solutions in Chinese or English
+
+### Quick Commands
+
+```bash
+# Analyze last error
+ccdebug last
+
+# View error history
+ccdebug history
+
+# Start monitoring mode
+ccdebug monitor start
+
+# Configure settings
+ccdebug config set defaultLanguage zh
+```
+
+### Example Workflow
+
+```python
+# When you run code with errors in Claude Code:
+result = undefined_function()  # NameError
+
+# CCDebugger automatically shows:
+╭─────────────────────────────────────────────────────────────────╮
+│ 🔍 CCDebugger 自動錯誤分析                                      │
+╰─────────────────────────────────────────────────────────────────╯
+
+⚠️ **CCDebugger 錯誤分析報告**
+**錯誤類型**: NameError
+**嚴重程度**: high
+
+**AI 調試提示**:
+你遇到了一個 NameError，這表示 Python 無法找到名為 'undefined_function' 的函數。
+
+**🎯 智能建議**:
+1. 檢查是否正確導入了該函數
+2. 確認函數名稱拼寫是否正確
+3. 檢查函數是否在當前作用域內定義
+```
+
+See [CLAUDE_CODE_INTEGRATION.md](CLAUDE_CODE_INTEGRATION.md) for full documentation.
 
 ## 📖 Examples
 
