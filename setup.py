@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="claudecode-debugger",
-    version="1.1.0",
+    version="1.5.0",
     author="888wing",
     author_email="",
     description="AI-powered debugging assistant with seamless Claude Code integration",
